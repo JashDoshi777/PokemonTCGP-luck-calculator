@@ -87,11 +87,11 @@ body, html {
 
 /* Glassmorphism Utilities */
 .glass-panel {
-  background: var(--glass-bg);
-  backdrop-filter: blur(40px) saturate(150%);
-  -webkit-backdrop-filter: blur(40px) saturate(150%);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1);
   border-radius: var(--radius-xl);
   overflow: hidden;
   position: relative;
@@ -102,27 +102,27 @@ body, html {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 100%);
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,0) 100%);
   z-index: 1;
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(30px) saturate(150%);
+  -webkit-backdrop-filter: blur(30px) saturate(150%);
   border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: var(--radius-lg);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.8);
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
 }
 
 .glass-card:hover {
-  transform: translateY(-8px) scale(1.02);
+  transform: translateY(-4px) scale(1.01);
   box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-  background: rgba(255, 255, 255, 0.6);
-  border-color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(255, 255, 255, 1);
 }
 
 /* Typography Enhancements */
@@ -174,22 +174,29 @@ body, html {
   box-shadow: 0 15px 32px rgba(255, 59, 48, 0.4);
 }
 
+/* Global Micro-Interactions */
+button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
+  transform: scale(0.95) !important;
+  transition: transform 0.1s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
 /* Nav */
 .nav-ultra {
   position: fixed;
   top: 20px;
+  bottom: auto;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(30px) saturate(200%);
-  -webkit-backdrop-filter: blur(30px) saturate(200%);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: rgba(240, 240, 245, 0.65); /* iOS System Gray Wash */
+  backdrop-filter: blur(50px) saturate(250%);
+  -webkit-backdrop-filter: blur(50px) saturate(250%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 100px;
-  padding: 8px 12px;
+  padding: 6px;
   display: flex;
-  gap: 8px;
+  gap: 4px;
   z-index: 1000;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.06);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,0.8);
 }
 
 .nav-pill {
@@ -201,12 +208,13 @@ body, html {
   font-size: 0.95rem;
   color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
 }
 
-.nav-pill:hover {
+.nav-pill:hover:not(.active) {
   color: var(--text-main);
+  background: rgba(0,0,0,0.04);
 }
 
 .nav-pill.active {
@@ -220,8 +228,8 @@ body, html {
   display: flex;
   align-items: center;
   gap: 16px;
-  background: rgba(255,255,255,0.5);
-  border: 1px solid rgba(255,255,255,0.8);
+  background: rgba(255,255,255,0.7);
+  border: 1px solid rgba(0,0,0,0.05);
   padding: 8px 16px;
   border-radius: 100px;
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
@@ -233,7 +241,7 @@ body, html {
   border-radius: 50%;
   border: none;
   background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   font-size: 1.2rem;
   font-weight: 600;
   cursor: pointer;
@@ -243,8 +251,8 @@ body, html {
 }
 
 .stepper-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transform: scale(1.05);
+  background: #fdfbfb;
 }
 
 .stepper-input {
@@ -352,13 +360,14 @@ body, html {
 
 /* Score Card Component */
 .score-card {
-  background: rgba(255,255,255,0.7);
-  border: 1px solid #fff;
+  background: #1d1d1f;
+  border: 1px solid rgba(255,255,255,0.1);
   padding: 50px 20px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   text-align: center;
   margin-bottom: 40px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+  box-shadow: 0 30px 60px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05);
+  color: #fff;
 }
 
 .score-value {
@@ -471,3 +480,135 @@ body, html {
   0% { transform: translateY(0px) rotate3d(1, 1, 0, 5deg); }
   100% { transform: translateY(-30px) rotate3d(-1, 1, 0, -5deg); }
 }
+
+/* Apple Style Landing Page Additions */
+.pin-wrap {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.pin-content {
+  display: flex;
+  width: 100%;
+  max-width: 1400px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 5%;
+}
+
+.pin-text {
+  flex: 1;
+  padding-right: 60px;
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.pin-image-container {
+  flex: 1;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80vh;
+}
+
+/* Phone Mockup Frame */
+.phone-frame {
+  width: 340px;
+  height: 700px;
+  border-radius: 45px;
+  background: #000;
+  padding: 14px;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.3), inset 0 0 0 2px #333;
+  position: relative;
+  z-index: 10;
+}
+
+.phone-frame::before {
+  content: '';
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 30px;
+  background: #000;
+  border-radius: 20px;
+  z-index: 20;
+}
+
+.phone-screen {
+  width: 100%;
+  height: 100%;
+  border-radius: 32px;
+  overflow: hidden;
+  position: relative;
+  background: #fff;
+}
+
+.phone-screen img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Apple Typography Highlights */
+.text-reveal {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+}
+
+.hero-large {
+  font-size: min(5.5rem, 10vw);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+}
+
+.text-dynamic {
+  background: linear-gradient(135deg, #1d1d1f 0%, #86868b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.section-title {
+  font-size: min(4.5rem, 10vw);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+}
+
+.section-subtitle {
+  font-size: 1.6rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin-top: 24px;
+  font-weight: 500;
+}
+
+@media (max-width: 900px) {
+  .pin-content {
+    flex-direction: column;
+    justify-content: center;
+  }
+  .pin-text {
+    padding-right: 0;
+    text-align: center;
+    margin-bottom: 40px;
+    align-items: flex-end;
+  }
+  .phone-frame {
+    width: 280px;
+    height: 580px;
+  }
+}
+

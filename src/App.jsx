@@ -120,13 +120,13 @@ function App() {
               {results ? (
                 <div className="animate-enter">
                   <div className="score-card">
-                    <div className={`score-value ${results.score > 1.5 ? 'text-gradient-red' : 'text-gradient'}`}>
+                    <div className={`score-value ${results.score > 1.5 ? 'text-gradient-red' : ''}`} style={results.score <= 1.5 ? { background: 'linear-gradient(135deg, #fff, #888)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' } : {}}>
                       {results.score > 0 ? '+' : ''}{results.score.toFixed(1)}
                     </div>
-                    <div style={{ fontWeight: 800, fontSize: '1.6rem', marginTop: '16px', letterSpacing: '-0.02em', color: 'var(--text-main)' }}>
+                    <div style={{ fontWeight: 800, fontSize: '1.6rem', marginTop: '16px', letterSpacing: '-0.02em', color: '#fff' }}>
                       Luck Rating
                     </div>
-                    <div style={{ fontSize: '1.1rem', marginTop: '12px', color: 'var(--text-muted)', fontWeight: 600, fontStyle: 'italic', padding: '0 20px', lineHeight: 1.4 }}>
+                    <div style={{ fontSize: '1.1rem', marginTop: '12px', color: '#86868b', fontWeight: 600, fontStyle: 'italic', padding: '0 20px', lineHeight: 1.4 }}>
                       "{(() => {
                         const s = results.score;
                         if (s > 3) return "Master Ball Luck! Are you secretly Arceus?";
@@ -165,7 +165,7 @@ function App() {
         {view === 'dex' && (
           <div className="animate-enter">
             <div className="glass-panel" style={{ display: 'flex', gap: '40px', alignItems: 'center', marginBottom: '60px', flexWrap: 'wrap' }}>
-              <img src="/card_mockup.png" alt="Dex" style={{ width: '120px', borderRadius: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }} />
+              <img src="/pocket_logo.webp" alt="Dex" style={{ width: '120px', borderRadius: '28px', boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }} />
               <div>
                 <h2 style={{ fontSize: 'min(3rem, 10vw)', fontWeight: 800, letterSpacing: '-0.04em' }} className="text-gradient">The Archives</h2>
                 <p style={{ color: 'var(--text-muted)', fontSize: '1.2rem', marginTop: '12px', fontWeight: 500, maxWidth: '600px' }}>
@@ -210,178 +210,159 @@ function LandingPage({ setView }) {
       ease: 'power3.out'
     });
 
-    // Banner Parallax
-    gsap.to('.hero-banner-img', {
-      yPercent: 20,
-      ease: 'none',
+    // Device Showcase Pin
+    const tl = gsap.timeline({
       scrollTrigger: {
-        trigger: '.hero-banner-container',
-        start: 'top bottom',
-        end: 'bottom top',
-        scrub: true
+        trigger: '.pin-wrap',
+        start: 'top top',
+        end: '+=3000', // Scroll for 3000px to see the animation
+        scrub: 1,
+        pin: true
       }
     });
 
-    // Bento Grid Reveal
-    gsap.from('.bento-box', {
+    // Image & Text Sequence
+    tl.to('.text-step-1', { opacity: 0, y: -50, duration: 1 })
+      .to('.img-step-1', { opacity: 0, scale: 1.1, duration: 1 }, "<")
+      .fromTo('.text-step-2', { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 1 }, "<")
+      .fromTo('.img-step-2', { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 1 }, "<")
+      
+      .to({}, {duration: 0.5}) // pause
+
+      .to('.text-step-2', { opacity: 0, y: -50, duration: 1 })
+      .to('.img-step-2', { opacity: 0, scale: 1.1, duration: 1 }, "<")
+      .fromTo('.text-step-3', { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 1 }, "<")
+      .fromTo('.img-step-3', { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 1 }, "<")
+      
+      .to({}, {duration: 0.5}); // pause
+
+    // Simple Grid Reveal
+    gsap.from('.simple-reveal-card', {
       y: 60,
       opacity: 0,
       duration: 1,
       stagger: 0.15,
-      ease: 'power4.out',
+      ease: 'power3.out',
       scrollTrigger: {
-        trigger: '.bento-grid',
-        start: 'top 85%'
+        trigger: '.simple-reveal-grid',
+        start: 'top 80%'
       }
-    });
-
-    // Steps Reveal
-    gsap.utils.toArray('.step-row').forEach((row, i) => {
-      gsap.from(row, {
-        x: i % 2 === 0 ? -50 : 50,
-        opacity: 0,
-        duration: 1,
-        ease: 'power3.out',
-        scrollTrigger: {
-          trigger: row,
-          start: 'top 80%'
-        }
-      });
     });
 
     // Final CTA Scale
     gsap.from('.final-cta', {
-      scale: 0.8,
+      scale: 0.95,
       opacity: 0,
       duration: 1.5,
-      ease: 'elastic.out(1, 0.5)',
+      ease: 'power3.out',
       scrollTrigger: {
         trigger: '.final-cta',
-        start: 'top 90%'
+        start: 'top 85%'
       }
     });
 
   }, { scope: container, dependencies: [] });
 
   return (
-    <div ref={container} style={{ paddingBottom: '100px', overflowX: 'hidden', position: 'relative' }}>
+    <div ref={container} style={{ overflowX: 'hidden', position: 'relative' }}>
       
-      {/* Ambient Animated Background */}
-      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: -1, overflow: 'hidden', pointerEvents: 'none' }}>
-        <div className="ambient-orb orb-1"></div>
-        <div className="ambient-orb orb-2"></div>
-        <div className="ambient-orb orb-3"></div>
-      </div>
-
       {/* Hero Section */}
-      <section style={{ textAlign: 'center', margin: '80px 0 100px', minHeight: '60vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }} className="hero-text">
-        <h1 style={{ fontSize: 'min(6rem, 15vw)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.05, marginBottom: '24px' }} className="text-gradient">
-          Track Your Pulls. <br />
-          <span className="text-gradient-red">Find Your Luck.</span>
+      <section style={{ textAlign: 'center', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingTop: '80px', paddingBottom: '80px', position: 'relative' }} className="hero-text">
+        <div style={{ position: 'absolute', top: '15%', left: '50%', transform: 'translateX(-50%)', zIndex: -1, opacity: 0.8, filter: 'blur(30px)' }}>
+          <img src="/glass_pokeball.png" alt="Pokeball Glow" style={{ width: '400px' }} />
+        </div>
+        <img src="/pocket_logo.webp" alt="Pokemon TCG Pocket" className="floating-card" style={{ width: '120px', height: '120px', objectFit: 'cover', marginBottom: '32px', zIndex: 1, borderRadius: '28px', boxShadow: '0 20px 50px rgba(0,0,0,0.2)' }} />
+        <h1 className="hero-large text-gradient" style={{ marginBottom: '24px', zIndex: 1 }}>
+          Track Your Daily Pulls.<br />
+          <span className="text-dynamic">Master the Wonder Pick.</span>
         </h1>
-        <p style={{ fontSize: '1.4rem', color: 'var(--text-muted)', maxWidth: '700px', margin: '0 auto 48px', lineHeight: 1.5, fontWeight: 500 }}>
-          The ultimate companion for Pokémon TCG Pocket. Log your booster packs, compare against official pull rates, and see if the RNG gods are with you.
+        <p className="section-subtitle" style={{ maxWidth: '700px', margin: '0 auto 48px', zIndex: 1 }}>
+          The ultimate analytical companion for Pokémon TCG Pocket. Calculate the exact odds of your daily booster packs and Wonder Picks.
         </p>
-        <button className="btn-super" onClick={() => { setView('calc'); window.scrollTo(0,0); }} style={{ transform: 'scale(1.1)' }}>
+        <button className="btn-super" onClick={() => { setView('calc'); window.scrollTo(0,0); }} style={{ transform: 'scale(1.1)', zIndex: 1 }}>
           Access the Rotom Dex
         </button>
-
-        <div style={{ marginTop: '60px', opacity: 0.6, animation: 'bounce 2s infinite' }}>
-          <div style={{ fontSize: '0.9rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '8px' }}>Scroll to Explore</div>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
       </section>
 
-      {/* Hero Banner Replacement: High-Res Charizard Card */}
-      <section className="hero-banner-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '600px', marginBottom: '150px', perspective: '1200px' }}>
-        <img 
-          src="/charizard.png" 
-          alt="Charizard" 
-          className="floating-card"
-          style={{ width: 'auto', height: '100%', maxHeight: '550px', objectFit: 'contain', borderRadius: '4% / 3%', zIndex: 10 }} 
-          onLoad={() => ScrollTrigger.refresh()}
-        />
-      </section>
+      {/* Scroll-Immersive Device Showcase */}
+      <section className="pin-wrap">
+        <div className="pin-content">
+          
+          <div className="pin-text">
+            <div style={{ position: 'relative', width: '100%', height: '250px' }}>
+              <div className="text-step-1" style={{ position: 'absolute', top: 0, left: 0, width: '100%' }}>
+                <h2 className="section-title text-gradient">Analyze Daily Packs.</h2>
+                <p className="section-subtitle">Log your two daily booster packs. Our engine maps directly to official Genetic Apex sub-rates.</p>
+              </div>
+              <div className="text-step-2" style={{ position: 'absolute', top: 0, left: 0, width: '100%', opacity: 0 }}>
+                <h2 className="section-title text-gradient">Wonder Pick Analytics.</h2>
+                <p className="section-subtitle">Did you really get lucky pulling that Charizard ex from a Wonder Pick? Find out instantly.</p>
+              </div>
+              <div className="text-step-3" style={{ position: 'absolute', top: 0, left: 0, width: '100%', opacity: 0 }}>
+                <h2 className="section-title text-gradient">Hunt Immersive Art.</h2>
+                <p className="section-subtitle">Calculate the precise Z-Score of pulling ultra-rare, 3D immersive cards compared to the global player base.</p>
+              </div>
+            </div>
+          </div>
 
-      {/* Bento Grid */}
-      <section style={{ marginBottom: '200px' }}>
-        <h2 style={{ fontSize: 'min(3rem, 10vw)', fontWeight: 800, letterSpacing: '-0.03em', textAlign: 'center', marginBottom: '60px' }} className="text-gradient">Uncover the Matrix.</h2>
-        <div className="bento-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
-          {/* Card 1 */}
-          <div className="glass-panel bento-box" style={{ padding: '0', display: 'flex', flexDirection: 'column', minHeight: '450px', background: 'linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.3) 100%)', position: 'relative', overflow: 'hidden', borderRadius: '32px' }}>
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'radial-gradient(circle at center, rgba(10,132,255,0.2), transparent 70%)', padding: '40px' }}>
-               <img src="/pikachu.png" alt="Pikachu" style={{ width: 'auto', height: '100%', maxHeight: '200px', objectFit: 'contain', filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.2))', transform: 'rotate(-5deg)' }} />
-            </div>
-            <div style={{ padding: '40px' }}>
-              <h3 style={{ fontSize: '2.2rem', fontWeight: 800, letterSpacing: '-0.02em' }}>Real-time Analytics</h3>
-              <p style={{ color: 'var(--text-muted)', marginTop: '16px', fontSize: '1.2rem', lineHeight: 1.5 }}>Live Z-Score engine instantly calculates if your pack luck is defying mathematical reality.</p>
-            </div>
-          </div>
-          
-          {/* Card 2 */}
-          <div className="glass-panel bento-box" style={{ padding: '0', display: 'flex', flexDirection: 'column', minHeight: '450px', background: 'linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.3) 100%)', position: 'relative', overflow: 'hidden', borderRadius: '32px' }}>
-             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'radial-gradient(circle at center, rgba(120,40,140,0.2), transparent 70%)', padding: '40px' }}>
-               <img src="/mewtwo.png" alt="Mewtwo" style={{ width: 'auto', height: '100%', maxHeight: '200px', objectFit: 'contain', filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.2))', transform: 'rotate(5deg)' }} />
-            </div>
-            <div style={{ padding: '40px' }}>
-              <h3 style={{ fontSize: '2.2rem', fontWeight: 800, letterSpacing: '-0.02em' }}>100% Pokédex</h3>
-              <p style={{ color: 'var(--text-muted)', marginTop: '16px', fontSize: '1.2rem', lineHeight: 1.5 }}>Every official expansion rigorously mapped. From Genetic Apex to the newest drops.</p>
-            </div>
-          </div>
-          
-          {/* Card 3 */}
-          <div className="glass-panel bento-box" style={{ padding: '0', display: 'flex', flexDirection: 'column', minHeight: '450px', background: 'linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.3) 100%)', position: 'relative', overflow: 'hidden', borderRadius: '32px', gridColumn: '1 / -1' }}>
-             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '300px', background: 'radial-gradient(ellipse at top, rgba(255,59,48,0.2), transparent 70%)' }}></div>
-            <div style={{ padding: '60px', textAlign: 'center', maxWidth: '800px', margin: 'auto' }}>
-              <h3 style={{ fontSize: '3rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--accent)' }}>Zero Input Lag</h3>
-              <p style={{ color: 'var(--text-muted)', marginTop: '16px', fontSize: '1.4rem', lineHeight: 1.5 }}>A fully client-side math engine built for Arceus-tier speed. No loading screens, no server delays. Pure instant probability calculations directly in your browser.</p>
+          <div className="pin-image-container">
+            <div className="phone-frame">
+              <div className="phone-screen">
+                <img src="/screen1.jpeg" alt="Pack Opening" className="img-step-1" />
+                <img src="/screen2.jpeg" alt="Card Binder" className="img-step-2" style={{ opacity: 0 }} />
+                <img src="/screen3.jpeg" alt="Statistics" className="img-step-3" style={{ opacity: 0 }} />
+              </div>
             </div>
           </div>
 
         </div>
       </section>
 
-      {/* How it Works */}
-      <section style={{ marginBottom: '200px', overflow: 'hidden' }}>
-        <h2 style={{ fontSize: 'min(3rem, 10vw)', fontWeight: 800, letterSpacing: '-0.03em', textAlign: 'center', marginBottom: '100px' }} className="text-gradient">The Path to Mastery.</h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '80px', maxWidth: '800px', margin: '0 auto' }}>
-          <div className="step-row glass-panel" style={{ padding: '60px', display: 'flex', gap: '60px', alignItems: 'center', borderRadius: '32px' }}>
-            <div style={{ fontSize: '8rem', fontWeight: 900, color: 'var(--accent)', opacity: 0.1, lineHeight: 0.8, flexShrink: 0 }}>01</div>
-            <div>
-              <h3 style={{ fontSize: '2.5rem', fontWeight: 800 }}>Select Your Expansion</h3>
-              <p style={{ fontSize: '1.4rem', color: 'var(--text-muted)', marginTop: '16px', lineHeight: 1.5 }}>Target a specific set from the Archives (like Genetic Apex), or calculate against the massive Global Pool.</p>
-            </div>
+      {/* Thematic Feature Section - Simple Reveal */}
+      <section style={{ padding: '150px 5%', position: 'relative' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          
+          <div style={{ textAlign: 'center', marginBottom: '80px' }}>
+            <h2 className="hero-large" style={{ color: '#1d1d1f', marginBottom: '16px' }}>Data-Driven.</h2>
+            <h2 className="hero-large" style={{ color: 'var(--accent)', marginBottom: '24px' }}>Trainer Approved.</h2>
+            <p className="section-subtitle" style={{ maxWidth: '600px', margin: '0 auto' }}>No more guessing. No more myths. Decode the exact mathematical standings of the entire global playerbase.</p>
           </div>
 
-          <div className="step-row glass-panel" style={{ padding: '60px', display: 'flex', gap: '60px', alignItems: 'center', flexDirection: 'row-reverse', textAlign: 'right', borderRadius: '32px' }}>
-            <div style={{ fontSize: '8rem', fontWeight: 900, color: 'var(--accent)', opacity: 0.1, lineHeight: 0.8, flexShrink: 0 }}>02</div>
-            <div>
-              <h3 style={{ fontSize: '2.5rem', fontWeight: 800 }}>Log Your Pulls</h3>
-              <p style={{ fontSize: '1.4rem', color: 'var(--text-muted)', marginTop: '16px', lineHeight: 1.5 }}>Input the exact number of Booster Packs opened and tap the rarities you secured. The interface is built for speed.</p>
+          <div className="simple-reveal-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '40px' }}>
+            
+            <div className="simple-reveal-card" style={{ background: '#fff', borderRadius: '40px', padding: '60px', boxShadow: '0 20px 60px rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+              <div style={{ fontSize: '5rem', fontWeight: 800, marginBottom: '16px', background: 'linear-gradient(135deg, #1d1d1f, #888)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>100%</div>
+              <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1d1d1f', marginBottom: '16px' }}>Client-Side Speed</h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.5 }}>Zero loading screens. Calculations run instantly directly in your browser.</p>
             </div>
-          </div>
 
-          <div className="step-row glass-panel" style={{ padding: '60px', display: 'flex', gap: '60px', alignItems: 'center', borderRadius: '32px', background: 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.5))', border: '2px solid rgba(255,59,48,0.2)' }}>
-            <div style={{ fontSize: '8rem', fontWeight: 900, color: 'var(--accent)', opacity: 1, lineHeight: 0.8, flexShrink: 0, textShadow: '0 10px 30px rgba(255,59,48,0.3)' }}>03</div>
-            <div>
-              <h3 style={{ fontSize: '2.5rem', fontWeight: 800 }}>Face the Professor</h3>
-              <p style={{ fontSize: '1.4rem', color: 'var(--text-muted)', marginTop: '16px', lineHeight: 1.5 }}>Get your personalized Luck Rating. Are you in the top 1% of lucky players, or did you get completely shafted by RNG?</p>
+            <div className="simple-reveal-card" style={{ background: '#fff', borderRadius: '40px', padding: '60px', boxShadow: '0 20px 60px rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+              <div style={{ fontSize: '5rem', fontWeight: 800, marginBottom: '16px', background: 'linear-gradient(135deg, #1d1d1f, #888)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>Live</div>
+              <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1d1d1f', marginBottom: '16px' }}>Expansion Tracking</h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.5 }}>Algorithms dynamically adapt to the specific expansion you are opening.</p>
             </div>
-          </div>
 
+            <div className="simple-reveal-card" style={{ background: '#1d1d1f', borderRadius: '40px', padding: '60px', boxShadow: '0 30px 60px rgba(0,0,0,0.15)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+              <div style={{ fontSize: '5rem', fontWeight: 800, marginBottom: '16px', background: 'linear-gradient(135deg, var(--accent), #ff9eb5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>Pro</div>
+              <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#fff', marginBottom: '16px' }}>Rotom Analytics</h3>
+              <p style={{ color: '#86868b', fontSize: '1.1rem', lineHeight: 1.5 }}>Receive a personalized Professor's Evaluation based on your precise Z-Score.</p>
+            </div>
+
+          </div>
         </div>
       </section>
 
       {/* Final CTA */}
-      <section className="final-cta" style={{ textAlign: 'center', padding: '120px 20px', background: 'rgba(255,255,255,0.6)', borderRadius: '40px', boxShadow: '0 40px 100px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '800px', height: '800px', background: 'radial-gradient(circle, rgba(255,59,48,0.2) 0%, rgba(255,59,48,0) 70%)', filter: 'blur(60px)', zIndex: -1 }}></div>
-        <h2 style={{ fontSize: 'min(4rem, 10vw)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: '24px' }}>Ready to test your luck?</h2>
-        <p style={{ fontSize: '1.4rem', color: 'var(--text-muted)', maxWidth: '600px', margin: '0 auto 40px', fontWeight: 500 }}>
-          Don't leave your pulls to chance. Start tracking your mathematical reality today.
-        </p>
-        <button className="btn-super" onClick={() => { setView('calc'); window.scrollTo(0,0); }} style={{ transform: 'scale(1.2)' }}>
-          Begin Analysis
-        </button>
+      <section style={{ padding: '150px 5%' }}>
+        <div className="final-cta" style={{ maxWidth: '1400px', margin: '0 auto', textAlign: 'center', padding: '120px 20px', background: '#000', borderRadius: '60px', color: '#fff' }}>
+          <h2 className="hero-large" style={{ color: '#fff', marginBottom: '24px' }}>Ready to test your luck?</h2>
+          <p className="section-subtitle" style={{ color: '#86868b', maxWidth: '600px', margin: '0 auto 40px' }}>
+            Join thousands of trainers tracking their true luck reality today.
+          </p>
+          <button className="btn-super" onClick={() => { setView('calc'); window.scrollTo(0,0); }} style={{ transform: 'scale(1.2)' }}>
+            Launch the Rotom Dex
+          </button>
+        </div>
       </section>
 
     </div>
