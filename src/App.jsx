@@ -83,7 +83,7 @@ function App() {
           ) : (
             <div className="animate-enter">
               <div className="glass-panel" style={{ display: 'flex', gap: '40px', alignItems: 'center', marginBottom: '60px', flexWrap: 'wrap' }}>
-                <img src="/pocket_logo.webp" alt="Dex" style={{ width: '120px', borderRadius: '28px', boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }} />
+                <img src="/images/pocket_logo.webp" alt="Dex" style={{ width: '120px', borderRadius: '28px', boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }} />
                 <div>
                   <h2 style={{ fontSize: 'min(3rem, 10vw)', fontWeight: 800, letterSpacing: '-0.04em' }} className="text-gradient">The Archives</h2>
                   <p style={{ color: 'var(--text-muted)', fontSize: '1.2rem', marginTop: '12px', fontWeight: 500, maxWidth: '600px' }}>
@@ -305,9 +305,9 @@ function LandingPage({ setView }) {
       {/* Hero Section */}
       <section style={{ textAlign: 'center', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingTop: '80px', paddingBottom: '80px', position: 'relative' }} className="hero-text">
         <div style={{ position: 'absolute', top: '15%', left: '50%', transform: 'translateX(-50%)', zIndex: -1, opacity: 0.8, filter: 'blur(30px)' }}>
-          <img src="/glass_pokeball.png" alt="Pokeball Glow" style={{ width: '400px' }} />
+          <img src="/images/glass_pokeball.png" alt="Pokeball Glow" style={{ width: '400px' }} />
         </div>
-        <img src="/pocket_logo.webp" alt="Pokemon TCG Pocket" className="floating-card" style={{ width: '120px', height: '120px', objectFit: 'cover', marginBottom: '32px', zIndex: 1, borderRadius: '28px', boxShadow: '0 20px 50px rgba(0,0,0,0.2)' }} />
+        <img src="/images/pocket_logo.webp" alt="Pokemon TCG Pocket" className="floating-card" style={{ width: '120px', height: '120px', objectFit: 'cover', marginBottom: '32px', zIndex: 1, borderRadius: '28px', boxShadow: '0 20px 50px rgba(0,0,0,0.2)' }} />
         <h1 className="hero-large text-gradient" style={{ marginBottom: '24px', zIndex: 1 }}>
           Track Your Daily Pulls.<br />
           <span className="text-dynamic">Master the Wonder Pick.</span>
@@ -344,9 +344,9 @@ function LandingPage({ setView }) {
           <div className="pin-image-container">
             <div className="phone-frame">
               <div className="phone-screen">
-                <img src="/screen1.jpeg" alt="Pack Opening" className="img-step-1" />
-                <img src="/screen2.jpeg" alt="Card Binder" className="img-step-2" style={{ opacity: 0 }} />
-                <img src="/screen3.jpeg" alt="Statistics" className="img-step-3" style={{ opacity: 0 }} />
+                <img src="/images/screen1.jpeg" alt="Pack Opening" className="img-step-1" />
+                <img src="/images/screen2.jpeg" alt="Card Binder" className="img-step-2" style={{ opacity: 0 }} />
+                <img src="/images/screen3.jpeg" alt="Statistics" className="img-step-3" style={{ opacity: 0 }} />
               </div>
             </div>
           </div>
