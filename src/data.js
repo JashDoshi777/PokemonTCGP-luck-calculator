@@ -45,6 +45,17 @@ export const BASE_RATES = {
   s1:    0.035710,
 };
 
+// Expected hits per pack for 4-card Deluxe Pack ex (Slot 4 is guaranteed 4-diamond or higher)
+export const DELUXE_RATES = {
+  crown: 0.005000,
+  star3: 0.012000,
+  star2: 0.035000,
+  star1: 0.025000,
+  d4:    0.966000,
+  s2:    0.005000,
+  s1:    0.000000,
+};
+
 export const BASE_RATES_SLOT6 = {
   s1: 0.005454,
   s2: 0.006364,

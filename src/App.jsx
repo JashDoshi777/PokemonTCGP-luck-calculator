@@ -72,15 +72,7 @@ function App() {
 
         {/* DEX VIEW */}
         {view === 'dex' && (
-          dexSelectedPack ? (
-            <div className="animate-enter">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '32px', marginBottom: '40px', flexWrap: 'wrap' }}>
-                {dexSelectedPack.img && <img src={dexSelectedPack.img} alt={dexSelectedPack.name} style={{ width: '160px', borderRadius: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }} />}
-                <h2 style={{ fontSize: 'min(3.5rem, 10vw)', fontWeight: 800, letterSpacing: '-0.03em', margin: 0 }}>{dexSelectedPack.name}</h2>
-              </div>
-              <Calculator mode="perset" selectedPack={dexSelectedPack} />
-            </div>
-          ) : (
+          <>
             <div className="animate-enter">
               <div className="glass-panel" style={{ display: 'flex', gap: '40px', alignItems: 'center', marginBottom: '60px', flexWrap: 'wrap' }}>
                 <img src="/images/pocket_logo.webp" alt="Dex" style={{ width: '120px', borderRadius: '28px', boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }} />
@@ -92,24 +84,54 @@ function App() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '32px' }}>
+              <div className="archives-grid" style={{ display: 'grid', gap: '32px' }}>
                 {PACKS.map(p => (
                   <div key={p.id} className="glass-card" style={{ padding: '32px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '24px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
                       {p.img && <img src={p.img} alt={p.name} style={{ width: '100%', maxWidth: '200px', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.15)' }} />}
                       <div style={{ width: '100%', textAlign: 'center' }}>
-                        <div style={{ fontWeight: 800, fontSize: '1.4rem', letterSpacing: '-0.02em', marginBottom: '8px' }}>{p.name}</div>
+                        <div style={{ fontWeight: 800, fontSize: '1.4rem', letterSpacing: '-0.04em', marginBottom: '8px' }}>{p.name}</div>
                         <div style={{ color: 'var(--text-muted)', fontSize: '1rem', fontWeight: 500 }}>Released: {p.date}</div>
                       </div>
                     </div>
-                    <button className="btn-super" style={{ width: '100%', padding: '14px', fontSize: '1rem', background: 'var(--text-main)', color: '#fff', boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }} onClick={() => { setDexSelectedPack(p); window.scrollTo(0, 0); }}>
+                    <button className="btn-super" style={{ width: '100%', padding: '14px', fontSize: '1rem', background: 'var(--text-main)', color: '#fff', boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }} onClick={() => setDexSelectedPack(p)}>
                       Open & Calculate
                     </button>
                   </div>
                 ))}
               </div>
             </div>
-          )
+
+            {/* iOS Bottom Sheet Modal */}
+            {dexSelectedPack && (
+              <div className="ios-backdrop" onClick={() => setDexSelectedPack(null)}>
+                <div className="ios-bottom-sheet" onClick={e => e.stopPropagation()}>
+                  
+                  <div className="sheet-header">
+                    <div className="drag-indicator"></div>
+                    <button className="ios-close-btn" onClick={() => setDexSelectedPack(null)}>
+                      <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                        <path d="M1 1L13 13M1 13L13 1"/>
+                      </svg>
+                    </button>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                      {dexSelectedPack.img && <img src={dexSelectedPack.img} alt={dexSelectedPack.name} style={{ width: '60px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />}
+                      <div>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.04em', margin: 0, color: 'var(--text-main)' }}>{dexSelectedPack.name}</h2>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginTop: '2px', fontWeight: 500 }}>Calculator Instance</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="sheet-content">
+                    <Calculator mode="perset" selectedPack={dexSelectedPack} isModal={true} />
+                  </div>
+                  
+                </div>
+              </div>
+            )}
+          </>
         )}
 
       </div>
@@ -117,7 +139,7 @@ function App() {
   );
 }
 
-function Calculator({ mode, selectedPack }) {
+function Calculator({ mode, selectedPack, isModal }) {
   const [packsOpened, setPacksOpened] = useState(0);
   const [counts, setCounts] = useState({});
   const [results, setResults] = useState(null);
@@ -132,14 +154,14 @@ function Calculator({ mode, selectedPack }) {
   };
 
   return (
-    <div className="layout-grid animate-enter">
-      <div className="glass-panel">
-        <h2 style={{ fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: '40px' }} className="text-gradient">Trainer's Log</h2>
+    <div className={`layout-grid animate-enter ${isModal ? 'ios-mode' : ''}`}>
+      <div className={isModal ? "ios-section" : "glass-panel"}>
+        <h2 className={isModal ? "ios-section-header" : "text-gradient"} style={!isModal ? { fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: '40px' } : {}}>Trainer's Log</h2>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: isModal ? '16px' : '32px' }}>
+          <div className={isModal ? "ios-card" : ""} style={!isModal ? { display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' } : {}}>
             <div>
-              <div style={{ fontWeight: 700, fontSize: '1.4rem' }}>Total Packs</div>
+              <div style={{ fontWeight: 700, fontSize: isModal ? '1.1rem' : '1.4rem' }}>Total Packs</div>
               <div style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>Enter the exact number opened</div>
             </div>
             <div className="stepper-ultra">
@@ -149,7 +171,7 @@ function Calculator({ mode, selectedPack }) {
             </div>
           </div>
 
-          <div className="rarity-grid" style={{ marginTop: '20px' }}>
+          <div className="rarity-grid" style={{ marginTop: isModal ? '0' : '20px' }}>
             <div className="glass-card" style={{ padding: '24px 10px', display: 'flex', flexDirection: 'column', height: '100%' }}>
               <div dangerouslySetInnerHTML={{ __html: ICONS.god }} style={{ height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(1.5)' }} />
               <div style={{ fontWeight: 700, margin: '20px 0 16px', fontSize: '1.05rem', letterSpacing: '-0.01em', textAlign: 'center', flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>God Pack</div>
@@ -160,7 +182,11 @@ function Calculator({ mode, selectedPack }) {
               </div>
             </div>
 
-            {RARITIES.filter(r => !r.shinyOnly || mode === 'overall' || selectedPack.hasShiny).map(r => (
+            {RARITIES.filter(r => {
+              const isDeluxe = mode === 'perset' && selectedPack?.id === 'deluxe';
+              if (isDeluxe && r.id === 's1') return false;
+              return !r.shinyOnly || mode === 'overall' || selectedPack.hasShiny;
+            }).map(r => (
               <div key={r.id} className="glass-card" style={{ padding: '24px 10px', display: 'flex', flexDirection: 'column', height: '100%' }}>
                 <div dangerouslySetInnerHTML={{ __html: r.icon }} style={{ height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(1.5)' }} />
                 <div style={{ fontWeight: 700, margin: '20px 0 16px', fontSize: '1.05rem', letterSpacing: '-0.01em', textAlign: 'center', flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{r.name}</div>
@@ -179,11 +205,11 @@ function Calculator({ mode, selectedPack }) {
         </div>
       </div>
 
-      <div className="glass-panel sticky-panel">
-        <h2 style={{ fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: '40px' }} className="text-gradient">Professor's Evaluation</h2>
+      <div className={isModal ? "ios-section" : "glass-panel sticky-panel"}>
+        <h2 className={isModal ? "ios-section-header" : "text-gradient"} style={!isModal ? { fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: '40px' } : {}}>Professor's Evaluation</h2>
         {results ? (
           <div className="animate-enter">
-            <div className="score-card">
+            <div className="score-card" style={isModal ? { display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '30px', marginBottom: '16px' } : {}}>
               <div className={`score-value ${results.score >= 7 ? 'text-gradient-red' : ''}`} style={results.score < 7 ? { background: 'linear-gradient(135deg, #fff, #888)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' } : {}}>
                 {results.score.toFixed(1)} <span style={{ fontSize: '0.4em', color: '#888' }}>/ 10</span>
               </div>
@@ -209,7 +235,7 @@ function Calculator({ mode, selectedPack }) {
               </div>
             </div>
 
-            <div style={{ background: 'rgba(255,255,255,0.5)', borderRadius: 'var(--radius-lg)', padding: '0 24px' }}>
+            <div className={isModal ? "ios-card" : ""} style={!isModal ? { background: 'rgba(255,255,255,0.5)', borderRadius: 'var(--radius-lg)', padding: '0 24px' } : { display: 'flex', flexDirection: 'column', padding: '12px 24px', gap: '0', alignItems: 'stretch' }}>
               {results.results.map(({ r, got, exp }) => (
                 <div key={r.id} className="breakdown-row">
                   <div>
@@ -222,7 +248,7 @@ function Calculator({ mode, selectedPack }) {
             </div>
           </div>
         ) : (
-          <div style={{ padding: '100px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: '1.2rem', fontWeight: 500 }}>
+          <div className={isModal ? "ios-card" : ""} style={!isModal ? { padding: '100px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: '1.2rem', fontWeight: 500 } : { padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '1rem', fontWeight: 500, justifyContent: 'center' }}>
             The Rotom Dex is standing by... enter your pulls to begin!
           </div>
         )}
@@ -364,7 +390,7 @@ function LandingPage({ setView }) {
             <p className="section-subtitle" style={{ maxWidth: '600px', margin: '0 auto' }}>No more guessing. No more myths. Decode the exact mathematical standings of the entire global playerbase.</p>
           </div>
 
-          <div className="simple-reveal-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '40px' }}>
+          <div className="simple-reveal-grid archives-grid" style={{ display: 'grid', gap: '40px' }}>
             
             <div className="simple-reveal-card" style={{ background: '#fff', borderRadius: '40px', padding: '60px', boxShadow: '0 20px 60px rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
               <div style={{ fontSize: '5rem', fontWeight: 800, marginBottom: '16px', background: 'linear-gradient(135deg, #1d1d1f, #888)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>100%</div>

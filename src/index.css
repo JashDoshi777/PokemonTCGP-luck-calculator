@@ -131,6 +131,8 @@ body, html {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  padding-top: 0.15em; /* Prevents Webkit text clipping on ascenders */
+  padding-bottom: 0.1em;
 }
 
 .text-gradient-red {
@@ -138,6 +140,30 @@ body, html {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  padding-top: 0.15em;
+  padding-bottom: 0.1em;
+}
+
+.hero-large {
+  font-size: min(5rem, 12vw);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+}
+
+.section-title {
+  font-size: min(3.5rem, 10vw);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  margin-bottom: 16px;
+}
+
+.section-subtitle {
+  font-size: 1.25rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  line-height: 1.5;
 }
 
 /* Buttons */
@@ -350,6 +376,9 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
 }
 
 /* Grids */
+.archives-grid {
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
 .rarity-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -409,6 +438,7 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
   font-weight: 800;
   letter-spacing: -0.06em;
   line-height: 1;
+  padding-right: 0.15em; /* Prevent right-edge clipping on WebKit gradients */
 }
 
 /* Breakdown Row */
@@ -516,6 +546,285 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
 }
 
 /* Apple Style Landing Page Additions */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* iOS Bottom Sheet Modal */
+.ios-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 2000;
+  display: flex;
+  justify-content: center;
+  align-items: center; /* Center vertically on desktop */
+  opacity: 0;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.ios-bottom-sheet {
+  width: 100%;
+  max-width: 900px;
+  background: #f2f2f7; /* Apple system grey background */
+  border-radius: 32px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.8);
+  transform: scale(0.92) translateY(30px);
+  opacity: 0;
+  animation: modalScaleUp 0.5s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  position: relative;
+  margin-bottom: auto;
+  margin-top: auto; /* Centered on desktop */
+}
+
+.sheet-header {
+  padding: 16px 24px 20px;
+  background: rgba(242, 242, 247, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.sheet-content {
+  padding: 24px 32px 40px;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+/* iOS Overlay Scrollbar styling */
+.sheet-content::-webkit-scrollbar {
+  width: 6px;
+  background: transparent;
+}
+.sheet-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sheet-content::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+}
+.sheet-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.4);
+}
+
+@media (max-width: 768px) {
+  .ios-backdrop {
+    align-items: flex-end; /* Bottom sheet on mobile */
+  }
+  .ios-bottom-sheet {
+    max-width: 100%;
+    border-radius: 32px 32px 0 0;
+    margin-bottom: 0;
+    margin-top: 40px;
+    opacity: 0;
+    transform: translateY(100%);
+    animation: slideUpMobile 0.5s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  }
+  .sheet-content {
+    padding: 20px 20px 40px;
+  }
+
+  /* Landing Page Mobile Fixes - Nuke Overlap Bug */
+  .pin-wrap {
+    align-items: flex-start !important;
+    padding-top: 90px !important; /* Lift text perfectly between Nav Pill and Phone */
+  }
+  .pin-content {
+    flex-direction: column !important;
+    padding-top: 0 !important; 
+    height: auto !important; /* Remove 100vh constraint to prevent flex overflow squeezing */
+    justify-content: flex-start !important;
+  }
+  .pin-text {
+    padding-right: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    flex: 0 0 auto !important;
+    margin-bottom: 40px !important; /* Push phone further down so text has breathing room */
+  }
+  .pin-text > div {
+    height: 280px !important; /* Room for massive wrapped text */
+  }
+  .pin-image-container {
+    height: auto !important;
+    flex: 1 !important;
+    align-items: flex-start !important;
+    transform: scale(0.70) !important; /* Scale down a bit more to ensure it fits below the text */
+    transform-origin: top center !important;
+  }
+
+  /* Global Container Paddings */
+  .glass-panel {
+    padding: 24px 20px;
+  }
+
+  /* Grids Mobile Scaling */
+  .archives-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100%, 1fr)) !important;
+  }
+  .rarity-grid {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)) !important;
+  }
+  
+  /* Calculator Layout stacking */
+  .layout-grid > div:first-child {
+    flex: 1 1 100%;
+  }
+
+  /* Final CTA Fix */
+  .final-cta {
+    padding: 60px 20px !important;
+    border-radius: 40px !important;
+  }
+  .final-cta .btn-super {
+    transform: scale(1) !important;
+    width: 100%;
+  }
+}
+
+@keyframes slideUpMobile {
+  0% { transform: translateY(100%); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.modal-panel {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  border: 1px solid rgba(0,0,0,0.03);
+}
+
+.drag-indicator {
+  width: 40px;
+  height: 5px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  margin: 0 auto 16px;
+}
+
+.ios-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.06);
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+}
+
+.ios-close-btn:hover {
+  background: rgba(0,0,0,0.1);
+  color: var(--text-main);
+  transform: scale(1.05);
+}
+
+.ios-close-btn:active {
+  transform: scale(0.9);
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  to { transform: translateY(0); }
+}
+
+@keyframes modalScaleUp {
+  0% { transform: scale(0.92) translateY(30px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* iOS App Mode Overrides (when Calculator is inside modal) */
+.ios-mode {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 24px !important;
+}
+
+.ios-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.ios-section-header {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  color: #8e8e93; /* iOS standard secondary label */
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+  padding-left: 16px;
+}
+
+.ios-mode .glass-panel {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.ios-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.ios-mode .glass-card {
+  background: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.03) !important;
+  border-radius: 16px !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.ios-mode .stepper-ultra {
+  background: #f2f2f7 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.ios-mode .stepper-btn {
+  background: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
+}
+
+.ios-mode .btn-super {
+  border-radius: 16px !important;
+}
+
 .pin-wrap {
   display: flex;
   height: 100vh;

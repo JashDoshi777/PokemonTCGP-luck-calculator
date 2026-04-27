@@ -1,4 +1,4 @@
-import { BASE_RATES, BASE_RATES_SLOT6, SHINY_OVERALL_BLEND, GOD_RATE, RARITIES } from './data';
+import { BASE_RATES, DELUXE_RATES, BASE_RATES_SLOT6, SHINY_OVERALL_BLEND, GOD_RATE, RARITIES } from './data';
 
 export function getShinyRate(key, pack) {
   if ((key === 's1' || key === 's2') && pack && pack.shinySlot6) {
@@ -8,6 +8,10 @@ export function getShinyRate(key, pack) {
 }
 
 export function getEffectiveRate(rarityKey, pack) {
+  if (pack && pack.id === 'deluxe') {
+    return DELUXE_RATES[rarityKey] || 0;
+  }
+  
   if (rarityKey === 's1' || rarityKey === 's2') {
     if (pack) return getShinyRate(rarityKey, pack);
     return SHINY_OVERALL_BLEND[rarityKey] || 0;
