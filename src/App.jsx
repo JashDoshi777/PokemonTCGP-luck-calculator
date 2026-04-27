@@ -261,11 +261,18 @@ function LandingPage({ setView }) {
       }
     });
 
-  }, { scope: container });
+  }, { scope: container, dependencies: [] });
 
   return (
-    <div ref={container} style={{ paddingBottom: '100px', overflowX: 'hidden' }}>
+    <div ref={container} style={{ paddingBottom: '100px', overflowX: 'hidden', position: 'relative' }}>
       
+      {/* Ambient Animated Background */}
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: -1, overflow: 'hidden', pointerEvents: 'none' }}>
+        <div className="ambient-orb orb-1"></div>
+        <div className="ambient-orb orb-2"></div>
+        <div className="ambient-orb orb-3"></div>
+      </div>
+
       {/* Hero Section */}
       <section style={{ textAlign: 'center', margin: '80px 0 100px', minHeight: '60vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }} className="hero-text">
         <h1 style={{ fontSize: 'min(6rem, 15vw)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.05, marginBottom: '24px' }} className="text-gradient">
@@ -278,37 +285,57 @@ function LandingPage({ setView }) {
         <button className="btn-super" onClick={() => { setView('calc'); window.scrollTo(0,0); }} style={{ transform: 'scale(1.1)' }}>
           Access the Rotom Dex
         </button>
+
+        <div style={{ marginTop: '60px', opacity: 0.6, animation: 'bounce 2s infinite' }}>
+          <div style={{ fontSize: '0.9rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '8px' }}>Scroll to Explore</div>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
       </section>
 
-      {/* Banner Section */}
-      <section className="glass-panel hero-banner-container" style={{ padding: 0, overflow: 'hidden', borderRadius: '32px', marginBottom: '200px', height: '600px', position: 'relative' }}>
-        {/* Placeholder gradient since we couldn't download an official banner image earlier */}
-        <div className="hero-banner-img" style={{ width: '100%', height: '130%', top: '-15%', position: 'absolute', background: 'linear-gradient(135deg, rgba(255,59,48,0.8), rgba(10,132,255,0.8))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-           <h2 style={{ color: 'white', fontSize: '4rem', fontWeight: 900, opacity: 0.5, mixBlendMode: 'overlay' }}>POKÉMON TCG POCKET</h2>
-        </div>
+      {/* Hero Banner Replacement: High-Res Charizard Card */}
+      <section className="hero-banner-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '600px', marginBottom: '150px', perspective: '1200px' }}>
+        <img 
+          src="/charizard.png" 
+          alt="Charizard" 
+          className="floating-card"
+          style={{ width: 'auto', height: '100%', maxHeight: '550px', objectFit: 'contain', borderRadius: '4% / 3%', zIndex: 10 }} 
+          onLoad={() => ScrollTrigger.refresh()}
+        />
       </section>
 
       {/* Bento Grid */}
       <section style={{ marginBottom: '200px' }}>
         <h2 style={{ fontSize: 'min(3rem, 10vw)', fontWeight: 800, letterSpacing: '-0.03em', textAlign: 'center', marginBottom: '60px' }} className="text-gradient">Uncover the Matrix.</h2>
         <div className="bento-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
-          
-          <div className="glass-panel bento-box" style={{ padding: '40px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', minHeight: '350px', background: 'linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,255,255,0.1))', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: '20px', right: '20px', fontSize: '5rem', opacity: 0.1 }}>📊</div>
-            <h3 style={{ fontSize: '1.8rem', fontWeight: 800 }}>Real-time Analytics</h3>
-            <p style={{ color: 'var(--text-muted)', marginTop: '12px', fontSize: '1.1rem' }}>Live Z-Score calculations instantly reveal if you're beating the odds.</p>
+          {/* Card 1 */}
+          <div className="glass-panel bento-box" style={{ padding: '0', display: 'flex', flexDirection: 'column', minHeight: '450px', background: 'linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.3) 100%)', position: 'relative', overflow: 'hidden', borderRadius: '32px' }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'radial-gradient(circle at center, rgba(10,132,255,0.2), transparent 70%)', padding: '40px' }}>
+               <img src="/pikachu.png" alt="Pikachu" style={{ width: 'auto', height: '100%', maxHeight: '200px', objectFit: 'contain', filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.2))', transform: 'rotate(-5deg)' }} />
+            </div>
+            <div style={{ padding: '40px' }}>
+              <h3 style={{ fontSize: '2.2rem', fontWeight: 800, letterSpacing: '-0.02em' }}>Real-time Analytics</h3>
+              <p style={{ color: 'var(--text-muted)', marginTop: '16px', fontSize: '1.2rem', lineHeight: 1.5 }}>Live Z-Score engine instantly calculates if your pack luck is defying mathematical reality.</p>
+            </div>
           </div>
           
-          <div className="glass-panel bento-box" style={{ padding: '40px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', minHeight: '350px', background: 'linear-gradient(135deg, rgba(255,255,255,0.5), rgba(255,255,255,0.05))', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: '20px', right: '20px', fontSize: '5rem', opacity: 0.1 }}>📖</div>
-            <h3 style={{ fontSize: '1.8rem', fontWeight: 800 }}>100% Pokédex Coverage</h3>
-            <p style={{ color: 'var(--text-muted)', marginTop: '12px', fontSize: '1.1rem' }}>Every official Pokémon TCG Pocket expansion rigorously mapped.</p>
+          {/* Card 2 */}
+          <div className="glass-panel bento-box" style={{ padding: '0', display: 'flex', flexDirection: 'column', minHeight: '450px', background: 'linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.3) 100%)', position: 'relative', overflow: 'hidden', borderRadius: '32px' }}>
+             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'radial-gradient(circle at center, rgba(120,40,140,0.2), transparent 70%)', padding: '40px' }}>
+               <img src="/mewtwo.png" alt="Mewtwo" style={{ width: 'auto', height: '100%', maxHeight: '200px', objectFit: 'contain', filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.2))', transform: 'rotate(5deg)' }} />
+            </div>
+            <div style={{ padding: '40px' }}>
+              <h3 style={{ fontSize: '2.2rem', fontWeight: 800, letterSpacing: '-0.02em' }}>100% Pokédex</h3>
+              <p style={{ color: 'var(--text-muted)', marginTop: '16px', fontSize: '1.2rem', lineHeight: 1.5 }}>Every official expansion rigorously mapped. From Genetic Apex to the newest drops.</p>
+            </div>
           </div>
           
-          <div className="glass-panel bento-box" style={{ padding: '40px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', minHeight: '350px', background: 'linear-gradient(135deg, rgba(255,59,48,0.2), rgba(255,59,48,0.05))', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: '20px', right: '20px', fontSize: '5rem', opacity: 0.1 }}>⚡</div>
-            <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--accent)' }}>Zero Input Lag</h3>
-            <p style={{ color: 'var(--text-muted)', marginTop: '12px', fontSize: '1.1rem' }}>A fully client-side math engine built for Arceus-tier speed.</p>
+          {/* Card 3 */}
+          <div className="glass-panel bento-box" style={{ padding: '0', display: 'flex', flexDirection: 'column', minHeight: '450px', background: 'linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.3) 100%)', position: 'relative', overflow: 'hidden', borderRadius: '32px', gridColumn: '1 / -1' }}>
+             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '300px', background: 'radial-gradient(ellipse at top, rgba(255,59,48,0.2), transparent 70%)' }}></div>
+            <div style={{ padding: '60px', textAlign: 'center', maxWidth: '800px', margin: 'auto' }}>
+              <h3 style={{ fontSize: '3rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--accent)' }}>Zero Input Lag</h3>
+              <p style={{ color: 'var(--text-muted)', marginTop: '16px', fontSize: '1.4rem', lineHeight: 1.5 }}>A fully client-side math engine built for Arceus-tier speed. No loading screens, no server delays. Pure instant probability calculations directly in your browser.</p>
+            </div>
           </div>
 
         </div>
@@ -318,28 +345,27 @@ function LandingPage({ setView }) {
       <section style={{ marginBottom: '200px', overflow: 'hidden' }}>
         <h2 style={{ fontSize: 'min(3rem, 10vw)', fontWeight: 800, letterSpacing: '-0.03em', textAlign: 'center', marginBottom: '100px' }} className="text-gradient">The Path to Mastery.</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '80px', maxWidth: '800px', margin: '0 auto' }}>
-          
-          <div className="step-row" style={{ display: 'flex', gap: '40px', alignItems: 'center' }}>
-            <div style={{ fontSize: '5rem', fontWeight: 900, color: 'var(--accent)', opacity: 0.3, lineHeight: 0.8 }}>01</div>
+          <div className="step-row glass-panel" style={{ padding: '60px', display: 'flex', gap: '60px', alignItems: 'center', borderRadius: '32px' }}>
+            <div style={{ fontSize: '8rem', fontWeight: 900, color: 'var(--accent)', opacity: 0.1, lineHeight: 0.8, flexShrink: 0 }}>01</div>
             <div>
-              <h3 style={{ fontSize: '2rem', fontWeight: 800 }}>Select Your Expansion</h3>
-              <p style={{ fontSize: '1.2rem', color: 'var(--text-muted)', marginTop: '8px' }}>Target a specific set from the Archives, or calculate against the entire Global Pool.</p>
+              <h3 style={{ fontSize: '2.5rem', fontWeight: 800 }}>Select Your Expansion</h3>
+              <p style={{ fontSize: '1.4rem', color: 'var(--text-muted)', marginTop: '16px', lineHeight: 1.5 }}>Target a specific set from the Archives (like Genetic Apex), or calculate against the massive Global Pool.</p>
             </div>
           </div>
 
-          <div className="step-row" style={{ display: 'flex', gap: '40px', alignItems: 'center', flexDirection: 'row-reverse', textAlign: 'right' }}>
-            <div style={{ fontSize: '5rem', fontWeight: 900, color: 'var(--accent)', opacity: 0.3, lineHeight: 0.8 }}>02</div>
+          <div className="step-row glass-panel" style={{ padding: '60px', display: 'flex', gap: '60px', alignItems: 'center', flexDirection: 'row-reverse', textAlign: 'right', borderRadius: '32px' }}>
+            <div style={{ fontSize: '8rem', fontWeight: 900, color: 'var(--accent)', opacity: 0.1, lineHeight: 0.8, flexShrink: 0 }}>02</div>
             <div>
-              <h3 style={{ fontSize: '2rem', fontWeight: 800 }}>Log Your Pulls</h3>
-              <p style={{ fontSize: '1.2rem', color: 'var(--text-muted)', marginTop: '8px' }}>Input the exact number of Booster Packs opened and the rarities you secured.</p>
+              <h3 style={{ fontSize: '2.5rem', fontWeight: 800 }}>Log Your Pulls</h3>
+              <p style={{ fontSize: '1.4rem', color: 'var(--text-muted)', marginTop: '16px', lineHeight: 1.5 }}>Input the exact number of Booster Packs opened and tap the rarities you secured. The interface is built for speed.</p>
             </div>
           </div>
 
-          <div className="step-row" style={{ display: 'flex', gap: '40px', alignItems: 'center' }}>
-            <div style={{ fontSize: '5rem', fontWeight: 900, color: 'var(--accent)', opacity: 0.3, lineHeight: 0.8 }}>03</div>
+          <div className="step-row glass-panel" style={{ padding: '60px', display: 'flex', gap: '60px', alignItems: 'center', borderRadius: '32px', background: 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.5))', border: '2px solid rgba(255,59,48,0.2)' }}>
+            <div style={{ fontSize: '8rem', fontWeight: 900, color: 'var(--accent)', opacity: 1, lineHeight: 0.8, flexShrink: 0, textShadow: '0 10px 30px rgba(255,59,48,0.3)' }}>03</div>
             <div>
-              <h3 style={{ fontSize: '2rem', fontWeight: 800 }}>Face the Professor</h3>
-              <p style={{ fontSize: '1.2rem', color: 'var(--text-muted)', marginTop: '8px' }}>Get your personalized Luck Rating and see where you stand on the global bell curve.</p>
+              <h3 style={{ fontSize: '2.5rem', fontWeight: 800 }}>Face the Professor</h3>
+              <p style={{ fontSize: '1.4rem', color: 'var(--text-muted)', marginTop: '16px', lineHeight: 1.5 }}>Get your personalized Luck Rating. Are you in the top 1% of lucky players, or did you get completely shafted by RNG?</p>
             </div>
           </div>
 

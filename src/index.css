@@ -410,3 +410,64 @@ body, html {
     margin-bottom: 24px;
   }
 }
+
+/* Ambient Background Orbs */
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  animation: floatOrb 25s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.orb-1 {
+  width: 900px; height: 900px;
+  background: radial-gradient(circle, rgba(255,59,48,0.8), transparent 70%);
+  top: -200px; left: -200px;
+  animation-delay: 0s;
+}
+
+.orb-2 {
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(10,132,255,0.8), transparent 70%);
+  bottom: -100px; right: -100px;
+  animation-delay: -5s;
+}
+
+.orb-3 {
+  width: 800px; height: 800px;
+  background: radial-gradient(circle, rgba(255,204,0,0.6), transparent 70%);
+  top: 40%; left: 30%;
+  animation-delay: -10s;
+}
+
+@keyframes floatOrb {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(150px, 80px) scale(1.1); }
+  100% { transform: translate(-100px, 200px) scale(0.9); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(10px); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shine {
+  0% { left: -100%; opacity: 0; }
+  20% { opacity: 1; }
+  100% { left: 200%; opacity: 0; }
+}
+
+.floating-card {
+  animation: floatCard 8s infinite alternate ease-in-out;
+  filter: drop-shadow(0 30px 60px rgba(0,0,0,0.3));
+}
+
+@keyframes floatCard {
+  0% { transform: translateY(0px) rotate3d(1, 1, 0, 5deg); }
+  100% { transform: translateY(-30px) rotate3d(-1, 1, 0, -5deg); }
+}
