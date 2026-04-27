@@ -2,37 +2,37 @@
 
 export const PACKS = [
   {id:'genetic',    name:'Genetic Apex',        date:'Oct 2024', hasShiny:false, packs:3,
-   pool:{crown:3, star3:3, star2:29, star1:24, d4:15}},
+   img:'/packs/genetic_apex.jpg', pool:{crown:3, star3:3, star2:29, star1:24, d4:15}},
   {id:'mythical',   name:'Mythical Island',      date:'Dec 2024', hasShiny:false, packs:1,
-   pool:{crown:1, star3:1, star2:10, star1:6, d4:5}},
+   img:'/packs/mythical_island.jpg', pool:{crown:1, star3:1, star2:10, star1:6, d4:5}},
   {id:'spacetime',  name:'Space-Time Smackdown', date:'Jan 2025', hasShiny:false, packs:2,
-   pool:{crown:2, star3:2, star2:24, star1:24, d4:10}},
+   img:'/packs/space_time_smackdown.jpg', pool:{crown:2, star3:2, star2:24, star1:24, d4:10}},
   {id:'triumphant', name:'Triumphant Light',     date:'Feb 2025', hasShiny:false, packs:1,
-   pool:{crown:1, star3:1, star2:13, star1:6, d4:5}},
+   img:'/packs/triumphant_light.jpg', pool:{crown:1, star3:1, star2:13, star1:6, d4:5}},
   {id:'shining',    name:'Shining Revelry',      date:'Mar 2025', hasShiny:true, packs:1,
-   pool:{crown:1, star3:1, star2:18, star1:5, d4:9, s2:4, s1:10}},
+   img:'/packs/shining_revelry.jpg', pool:{crown:1, star3:1, star2:18, star1:5, d4:9, s2:4, s1:10}},
   {id:'celestial',  name:'Celestial Guardians',  date:'Apr 2025', hasShiny:true, packs:2,
-   pool:{crown:2, star3:2, star2:28, star1:24, d4:10, s2:8, s1:20}},
+   img:'/packs/celestial_guradian.jpg', pool:{crown:2, star3:2, star2:28, star1:24, d4:10, s2:8, s1:20}},
   {id:'extradim',   name:'Extradim. Crisis',     date:'May 2025', hasShiny:true, packs:1,
-   pool:{crown:1, star3:1, star2:12, star1:6, d4:5, s2:4, s1:10}},
+   img:'/packs/extradimensional_crisis.jpg', pool:{crown:1, star3:1, star2:12, star1:6, d4:5, s2:4, s1:10}},
   {id:'eevee',      name:'Eevee Grove',          date:'Jun 2025', hasShiny:true, packs:1,
-   pool:{crown:1, star3:1, star2:13, star1:9, d4:6, s2:4, s1:10}},
+   img:'/packs/eevee_grove.jpg', pool:{crown:1, star3:1, star2:13, star1:9, d4:6, s2:4, s1:10}},
   {id:'wisdom',     name:'Wisdom Sea & Sky',     date:'Jul 2025', hasShiny:true, packs:2,
-   pool:{crown:2, star3:2, star2:24, star1:24, d4:10, s2:8, s1:20}},
+   img:'/packs/wisdom_of_sea_and_sky.jpg', pool:{crown:2, star3:2, star2:24, star1:24, d4:10, s2:8, s1:20}},
   {id:'secluded',   name:'Secluded Springs',     date:'Aug 2025', hasShiny:true, packs:1,
-   pool:{crown:1, star3:1, star2:12, star1:6, d4:5, s2:4, s1:10}},
+   img:'/packs/secluded_srings.jpg', pool:{crown:1, star3:1, star2:12, star1:6, d4:5, s2:4, s1:10}},
   {id:'deluxe',     name:'Deluxe Pack ex',       date:'Sep 2025', hasShiny:true, packs:1,
-   pool:{crown:1, star3:1, star2:16, star1:6, d4:75, s2:2, s1:0}},
+   img:'/packs/deluxe_pack_ex.jpg', pool:{crown:1, star3:1, star2:16, star1:6, d4:75, s2:2, s1:0}},
   {id:'mega',       name:'Mega Rising',          date:'Oct 2025', hasShiny:true, shinySlot6:true, packs:3,
-   pool:{crown:3, star3:3, star2:30, star1:27, d4:15, s2:9, s1:33}},
+   img:'/packs/mega_rising.jpg', pool:{crown:3, star3:3, star2:30, star1:27, d4:15, s2:9, s1:33}},
   {id:'crimson',    name:'Crimson Blaze',        date:'Dec 2025', hasShiny:true, shinySlot6:true, packs:1,
-   pool:{crown:2, star3:1, star2:11, star1:6, d4:5, s2:4, s1:10}},
+   img:'/packs/crimson_blaze.jpg', pool:{crown:2, star3:1, star2:11, star1:6, d4:5, s2:4, s1:10}},
   {id:'fantastical',name:'Fantastical Parade',   date:'Jan 2026', hasShiny:true, shinySlot6:true, packs:1,
-   pool:{crown:2, star3:3, star2:23, star1:24, d4:10, s2:8, s1:20}},
+   img:'/packs/fantastical_parade.jpg', pool:{crown:2, star3:3, star2:23, star1:24, d4:10, s2:8, s1:20}},
   {id:'megashine',  name:'Mega Shine',           date:'Mar 2026', hasShiny:true, shinySlot6:true, packs:1,
-   pool:{crown:2, star3:2, star2:9, star1:6, d4:5, s2:5, s1:24}},
+   img:'/packs/mega shine.jpg', pool:{crown:2, star3:2, star2:9, star1:6, d4:5, s2:5, s1:24}},
   {id:'pulsing',    name:'Pulsing Aura',         date:'Apr 2026', hasShiny:true, shinySlot6:true, packs:1, preliminary:true,
-   pool:{crown:2, star3:2, star2:11, star1:6, d4:5, s2:4, s1:10}},
+   img:'/packs/pulsing aura.jpg', pool:{crown:2, star3:2, star2:11, star1:6, d4:5, s2:4, s1:10}},
 ];
 
 export const BASE_RATES = {
@@ -72,36 +72,44 @@ export const SLOT_RATES = {
 };
 
 export const ICONS = {
-  crown: `<svg width="24" height="17" viewBox="0 0 24 17" xmlns="http://www.w3.org/2000/svg">
-    <path d="M1.5 15.5 L4.5 5.5 L9 11 L12 2 L15 11 L19.5 5.5 L22.5 15.5 Z" fill="#d4920c" stroke="#a06808" stroke-width="0.8" stroke-linejoin="round"/>
-    <rect x="1.5" y="14" width="21" height="2.5" rx="1" fill="#d4920c"/>
-  </svg>`,
-  '3star': `<svg width="40" height="14" viewBox="0 0 40 14" xmlns="http://www.w3.org/2000/svg">
-    <path d="M7,1L8.3,4.8L12.5,4.8L9.1,7.3L10.4,11.1L7,8.6L3.6,11.1L4.9,7.3L1.5,4.8L5.7,4.8Z" fill="#8b35cc"/>
-    <path d="M20,1L21.3,4.8L25.5,4.8L22.1,7.3L23.4,11.1L20,8.6L16.6,11.1L17.9,7.3L14.5,4.8L18.7,4.8Z" fill="#8b35cc"/>
-    <path d="M33,1L34.3,4.8L38.5,4.8L35.1,7.3L36.4,11.1L33,8.6L29.6,11.1L30.9,7.3L27.5,4.8L31.7,4.8Z" fill="#8b35cc"/>
-  </svg>`,
-  '2star': `<svg width="28" height="14" viewBox="0 0 28 14" xmlns="http://www.w3.org/2000/svg">
-    <path d="M7,1L8.3,4.8L12.5,4.8L9.1,7.3L10.4,11.1L7,8.6L3.6,11.1L4.9,7.3L1.5,4.8L5.7,4.8Z" fill="#1a5fd4"/>
-    <path d="M21,1L22.3,4.8L26.5,4.8L23.1,7.3L24.4,11.1L21,8.6L17.6,11.1L18.9,7.3L15.5,4.8L19.7,4.8Z" fill="#1a5fd4"/>
-  </svg>`,
-  '1star': `<svg width="14" height="14" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
-    <path d="M7,1L8.3,4.8L12.5,4.8L9.1,7.3L10.4,11.1L7,8.6L3.6,11.1L4.9,7.3L1.5,4.8L5.7,4.8Z" fill="#0e8fa0"/>
-  </svg>`,
-  '4d': `<svg width="42" height="14" viewBox="0 0 42 14" xmlns="http://www.w3.org/2000/svg">
-    <path d="M5.5,1L10,7L5.5,13L1,7Z" fill="#2a9060"/>
-    <path d="M16.5,1L21,7L16.5,13L12,7Z" fill="#2a9060"/>
-    <path d="M27.5,1L32,7L27.5,13L23,7Z" fill="#2a9060"/>
-    <path d="M38.5,1L43,7L38.5,13L34,7Z" fill="#2a9060"/>
-  </svg>`,
-  s2: `<svg width="32" height="14" viewBox="0 0 32 14" xmlns="http://www.w3.org/2000/svg">
-    <path d="M8,0.5L9.2,4.6L13.1,2.7L11.2,6.6L15.3,7.8L11.2,9L13.1,12.9L9.2,11L8,15.1L6.8,11L2.9,12.9L4.8,9L0.9,7.8L4.8,6.6L2.9,2.7L6.8,4.6Z" fill="#ffc107"/>
-  </svg>`,
-  s1: `<svg width="16" height="14" viewBox="0 0 16 14" xmlns="http://www.w3.org/2000/svg">
-    <path d="M8,0.5L9.2,4.6L13.1,2.7L11.2,6.6L15.3,7.8L11.2,9L13.1,12.9L9.2,11L8,15.1L6.8,11L2.9,12.9L4.8,9L0.9,7.8L4.8,6.6L2.9,2.7L6.8,4.6Z" fill="#ffc107"/>
-  </svg>`,
-  god: `<svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="9" cy="9" r="8" fill="none" stroke="#7c3aed" stroke-width="1.5"/>
+  crown: `<img src="/icons/crown.png" alt="Crown" style="height: 24px; object-fit: contain;" />`,
+  '3star': `<div style="display: flex; gap: 2px;">
+    <img src="/icons/star.png" alt="Star" style="height: 18px; object-fit: contain;" />
+    <img src="/icons/star.png" alt="Star" style="height: 18px; object-fit: contain;" />
+    <img src="/icons/star.png" alt="Star" style="height: 18px; object-fit: contain;" />
+  </div>`,
+  '2star': `<div style="display: flex; gap: 2px;">
+    <img src="/icons/star.png" alt="Star" style="height: 18px; object-fit: contain;" />
+    <img src="/icons/star.png" alt="Star" style="height: 18px; object-fit: contain;" />
+  </div>`,
+  '1star': `<img src="/icons/star.png" alt="Star" style="height: 18px; object-fit: contain;" />`,
+  '4d': `<div style="display: flex; gap: 1px;">
+    <img src="/icons/diamond.png" alt="Diamond" style="height: 15px; object-fit: contain;" />
+    <img src="/icons/diamond.png" alt="Diamond" style="height: 15px; object-fit: contain;" />
+    <img src="/icons/diamond.png" alt="Diamond" style="height: 15px; object-fit: contain;" />
+    <img src="/icons/diamond.png" alt="Diamond" style="height: 15px; object-fit: contain;" />
+  </div>`,
+  s2: `<div style="display: flex; gap: 4px;">
+    <img src="/icons/shiny.png" alt="Shiny" style="height: 20px; object-fit: contain;" />
+    <img src="/icons/shiny.png" alt="Shiny" style="height: 20px; object-fit: contain;" />
+  </div>`,
+  s1: `<img src="/icons/shiny.png" alt="Shiny" style="height: 20px; object-fit: contain;" />`,
+  god: `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="rainbow" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#ff0000" />
+        <stop offset="20%" stop-color="#ffff00" />
+        <stop offset="40%" stop-color="#00ff00" />
+        <stop offset="60%" stop-color="#00ffff" />
+        <stop offset="80%" stop-color="#0000ff" />
+        <stop offset="100%" stop-color="#ff00ff" />
+      </linearGradient>
+    </defs>
+    <circle cx="12" cy="12" r="10" fill="url(#rainbow)" stroke="#333" stroke-width="1.5"/>
+    <path d="M 2 12 A 10 10 0 0 0 22 12 Z" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <line x1="2" y1="12" x2="22" y2="12" stroke="#333" stroke-width="2"/>
+    <circle cx="12" cy="12" r="4" fill="#fff" stroke="#333" stroke-width="2"/>
+    <circle cx="12" cy="12" r="1.5" fill="#333"/>
   </svg>`,
 };
 
