@@ -68,7 +68,6 @@ export const SHINY_OVERALL_BLEND = {
 
 export const GOD_RATE = 0.0005;
 export const SHINY_GOD_RATE = 0.00005; // 1 in 20,000 for Mega Shine "Themed Rare Pack"
-export const SMEW_RATE = 0.003355; // 1 in 298 for Shiny Immersive Mew
 
 export const SLOT_RATES = {
   crown: {desc:'slot 4: 0.040% · slot 5: 0.160%'},
@@ -130,7 +129,6 @@ export const RARITIES = [
   {id:'2star', name:'2-Star Special Art',        key:'star2', weight:120, icon:ICONS['2star']},
   {id:'1star', name:'1-Star Illustration Rare',  key:'star1', weight:80,  icon:ICONS['1star']},
   {id:'4d',    name:'4-Diamond ex',              key:'d4',    weight:50,  icon:ICONS['4d']},
-  {id:'sMew',  name:'Shiny Immersive Mew',       key:'sMew',  weight:250, icon:ICONS['3star'], shinyOnly:true, packSpecific: 'megashine'},
-  {id:'s2',    name:'2-Shiny Double Shiny',      key:'s2',    weight:200, icon:ICONS.s2,  shinyOnly:true},
-  {id:'s1',    name:'1-Shiny Shiny Rare',        key:'s1',    weight:130, icon:ICONS.s1,  shinyOnly:true},
+  {id:'s2',    name:'2-star Shiny',      key:'s2',    weight:200, icon:ICONS.s2,  shinyOnly:true},
+  {id:'s1',    name:'1-star Shiny',        key:'s1',    weight:130, icon:ICONS.s1,  shinyOnly:true},
 ];

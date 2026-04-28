@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -144,16 +144,35 @@ function Calculator({ mode, selectedPack, isModal }) {
   const [deluxePacksOpened, setDeluxePacksOpened] = useState(0);
   const [counts, setCounts] = useState({});
   const [results, setResults] = useState(null);
+  
+  const resultsRef = useRef(null);
 
   const adjustPacks = (val) => setPacksOpened(prev => Math.max(0, prev + val));
   const adjustDeluxePacks = (val) => setDeluxePacksOpened(prev => Math.max(0, prev + val));
   const adjustRarity = (id, val) => setCounts(prev => ({ ...prev, [id]: Math.max(0, (prev[id] || 0) + val) }));
   const setRarity = (id, val) => setCounts(prev => ({ ...prev, [id]: Math.max(0, val) }));
 
-  const calculate = () => {
-    if (packsOpened <= 0 && deluxePacksOpened <= 0) { alert('Please enter packs opened.'); return; }
+  const calculate = (isAuto = false) => {
+    if (packsOpened <= 0 && deluxePacksOpened <= 0) { 
+      if (!isAuto) alert('Please enter packs opened.'); 
+      return; 
+    }
     setResults(runLuckCalculation(packsOpened, counts, mode, selectedPack, deluxePacksOpened));
+    
+    if (!isAuto) {
+      setTimeout(() => {
+        if (resultsRef.current) {
+          resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
   };
+
+  useEffect(() => {
+    if (results) {
+      calculate(true);
+    }
+  }, [packsOpened, deluxePacksOpened, counts, mode, selectedPack]);
 
   return (
     <div className={`layout-grid animate-enter ${isModal ? 'ios-mode' : ''}`}>
@@ -229,13 +248,13 @@ function Calculator({ mode, selectedPack, isModal }) {
             ))}
           </div>
 
-          <button className="btn-super" onClick={calculate} style={{ width: '100%', marginTop: '20px' }}>
+          <button className="btn-super" onClick={() => calculate(false)} style={{ width: '100%', marginTop: '20px' }}>
             Evaluate Pulls!
           </button>
         </div>
       </div>
 
-      <div className={isModal ? "ios-section" : "glass-panel sticky-panel"}>
+      <div ref={resultsRef} className={isModal ? "ios-section" : "glass-panel sticky-panel"}>
         <h2 className={isModal ? "ios-section-header" : "text-gradient"} style={!isModal ? { fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: '40px' } : {}}>Professor's Evaluation</h2>
         {results ? (
           <div className="animate-enter">
