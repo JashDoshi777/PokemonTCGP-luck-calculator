@@ -1,4 +1,4 @@
-import { BASE_RATES, DELUXE_RATES, BASE_RATES_SLOT6, SHINY_OVERALL_BLEND, GOD_RATE, RARITIES } from './data';
+import { BASE_RATES, DELUXE_RATES, BASE_RATES_SLOT6, SHINY_OVERALL_BLEND, GOD_RATE, SHINY_GOD_RATE, SMEW_RATE, RARITIES } from './data';
 
 export function getShinyRate(key, pack) {
   if ((key === 's1' || key === 's2') && pack && pack.shinySlot6) {
@@ -8,6 +8,9 @@ export function getShinyRate(key, pack) {
 }
 
 export function getEffectiveRate(rarityKey, pack) {
+  if (rarityKey === 'sMew') {
+    return SMEW_RATE;
+  }
   if (pack && pack.id === 'deluxe') {
     return DELUXE_RATES[rarityKey] || 0;
   }
@@ -42,26 +45,57 @@ export function normCDF(z) {
   return 0.5 * (1 + sg * y);
 }
 
-export function runLuckCalculation(totalPacks, counts, mode, selectedPack) {
+export function runLuckCalculation(totalPacks, counts, mode, selectedPack, deluxePacks = 0) {
   const N = parseInt(totalPacks) || 0;
   if (N < 1) return null;
 
   const showShiny = mode === 'overall' || selectedPack.hasShiny;
-  const active = RARITIES.filter(r => !r.shinyOnly || showShiny);
+  const active = RARITIES.filter(r => {
+    if (r.packSpecific && r.packSpecific !== selectedPack?.id) return false;
+    return !r.shinyOnly || showShiny;
+  });
+  
   const isSlot6Context = mode === 'perset' && selectedPack.shinySlot6;
 
   const godCount = parseInt(counts.godPack) || 0;
-  const godExp = N * GOD_RATE;
+  // If Deluxe packs are involved in overall mode, or we are specifically in Deluxe perset, they don't drop God packs.
+  const stdNForGod = mode === 'overall' ? Math.max(0, N - (parseInt(deluxePacks) || 0)) : (selectedPack?.id === 'deluxe' ? 0 : N);
+  const godExp = stdNForGod * GOD_RATE;
   const godZ = zSc(godExp, godCount);
 
   let twz = godZ * 100;
   let tw = 100;
+  
+  let shinyGodCount = 0;
+  let shinyGodExp = 0;
+  let shinyGodZ = 0;
+  let shinyGodPct = 1;
+  
+  if (selectedPack?.id === 'megashine') {
+    shinyGodCount = parseInt(counts.shinyGodPack) || 0;
+    shinyGodExp = N * SHINY_GOD_RATE;
+    shinyGodZ = zSc(shinyGodExp, shinyGodCount);
+    shinyGodPct = normCDF(shinyGodZ);
+    twz += shinyGodZ * 200; // heavy weight for extremely rare pack
+    tw += 200;
+  }
 
   const results = active.map(r => {
     const got = parseInt(counts[r.id]) || 0;
     const packCtx = mode === 'perset' ? selectedPack : null;
-    const prob = getEffectiveRate(r.key, packCtx);
-    const exp = N * prob;
+    
+    let exp = 0;
+    let prob = 0;
+    
+    if (mode === 'overall') {
+      const N_dlx = Math.max(0, parseInt(deluxePacks) || 0);
+      const N_std = Math.max(0, N - N_dlx);
+      exp = (N_std * getEffectiveRate(r.key, null)) + (N_dlx * (DELUXE_RATES[r.key] || 0));
+      prob = N > 0 ? exp / N : 0;
+    } else {
+      prob = getEffectiveRate(r.key, packCtx);
+      exp = N * prob;
+    }
     const z = zSc(exp, got);
 
     let pct;
@@ -92,6 +126,9 @@ export function runLuckCalculation(totalPacks, counts, mode, selectedPack) {
     results,
     godCount,
     godExp,
-    godPct: normCDF(godZ)
+    godPct: normCDF(godZ),
+    shinyGodCount,
+    shinyGodExp,
+    shinyGodPct
   };
 }

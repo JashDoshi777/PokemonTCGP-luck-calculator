@@ -21,8 +21,8 @@ export const PACKS = [
    img:'/packs/wisdom_of_sea_and_sky.jpg', pool:{crown:2, star3:2, star2:24, star1:24, d4:10, s2:8, s1:20}},
   {id:'secluded',   name:'Secluded Springs',     date:'Aug 2025', hasShiny:true, packs:1,
    img:'/packs/secluded_srings.jpg', pool:{crown:1, star3:1, star2:12, star1:6, d4:5, s2:4, s1:10}},
-  {id:'deluxe',     name:'Deluxe Pack ex',       date:'Sep 2025', hasShiny:true, packs:1,
-   img:'/packs/deluxe_pack_ex.jpg', pool:{crown:1, star3:1, star2:16, star1:6, d4:75, s2:2, s1:0}},
+  {id:'deluxe',     name:'Deluxe Pack ex',       date:'Sep 2025', hasShiny:false, packs:1,
+   img:'/packs/deluxe_pack_ex.jpg', pool:{crown:1, star3:1, star2:16, star1:6, d4:75}},
   {id:'mega',       name:'Mega Rising',          date:'Oct 2025', hasShiny:true, shinySlot6:true, packs:3,
    img:'/packs/mega_rising.jpg', pool:{crown:3, star3:3, star2:30, star1:27, d4:15, s2:9, s1:33}},
   {id:'crimson',    name:'Crimson Blaze',        date:'Dec 2025', hasShiny:true, shinySlot6:true, packs:1,
@@ -52,8 +52,6 @@ export const DELUXE_RATES = {
   star2: 0.035000,
   star1: 0.025000,
   d4:    0.966000,
-  s2:    0.005000,
-  s1:    0.000000,
 };
 
 export const BASE_RATES_SLOT6 = {
@@ -69,6 +67,8 @@ export const SHINY_OVERALL_BLEND = {
 };
 
 export const GOD_RATE = 0.0005;
+export const SHINY_GOD_RATE = 0.00005; // 1 in 20,000 for Mega Shine "Themed Rare Pack"
+export const SMEW_RATE = 0.003355; // 1 in 298 for Shiny Immersive Mew
 
 export const SLOT_RATES = {
   crown: {desc:'slot 4: 0.040% · slot 5: 0.160%'},
@@ -130,6 +130,7 @@ export const RARITIES = [
   {id:'2star', name:'2-Star Special Art',        key:'star2', weight:120, icon:ICONS['2star']},
   {id:'1star', name:'1-Star Illustration Rare',  key:'star1', weight:80,  icon:ICONS['1star']},
   {id:'4d',    name:'4-Diamond ex',              key:'d4',    weight:50,  icon:ICONS['4d']},
+  {id:'sMew',  name:'Shiny Immersive Mew',       key:'sMew',  weight:250, icon:ICONS['3star'], shinyOnly:true, packSpecific: 'megashine'},
   {id:'s2',    name:'2-Shiny Double Shiny',      key:'s2',    weight:200, icon:ICONS.s2,  shinyOnly:true},
   {id:'s1',    name:'1-Shiny Shiny Rare',        key:'s1',    weight:130, icon:ICONS.s1,  shinyOnly:true},
 ];
