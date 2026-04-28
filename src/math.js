@@ -65,8 +65,14 @@ export function runLuckCalculation(standardPacksInput, counts, mode, selectedPac
   const godExp = stdNForGod * GOD_RATE;
   const godZ = zSc(godExp, godCount);
 
-  let twz = godZ * 100;
-  let tw = 100;
+  let sum_wz = 0;
+  let sum_ww = 0;
+  
+  if (stdNForGod > 0) {
+    const w = Math.max(1, Math.log(1 / GOD_RATE));
+    sum_wz += w * godZ;
+    sum_ww += w * w;
+  }
   
   let shinyGodCount = 0;
   let shinyGodExp = 0;
@@ -78,8 +84,12 @@ export function runLuckCalculation(standardPacksInput, counts, mode, selectedPac
     shinyGodExp = N_std * SHINY_GOD_RATE;
     shinyGodZ = zSc(shinyGodExp, shinyGodCount);
     shinyGodPct = normCDF(shinyGodZ);
-    twz += shinyGodZ * 200; // heavy weight for extremely rare pack
-    tw += 200;
+    
+    if (N_std > 0) {
+      const w = Math.max(1, Math.log(1 / SHINY_GOD_RATE));
+      sum_wz += w * shinyGodZ;
+      sum_ww += w * w;
+    }
   }
 
   const results = active.map(r => {
@@ -106,18 +116,17 @@ export function runLuckCalculation(standardPacksInput, counts, mode, selectedPac
       pct = normCDF(z);
     }
 
-    let w = r.weight;
-    if (isSlot6Context && r.key === 's1') w = 300;
-    if (isSlot6Context && r.key === 's2') w = 220;
-
-    twz += z * w;
-    tw += w;
+    if (exp > 0 && prob > 0) {
+      const w = Math.max(1, Math.log(1 / prob));
+      sum_wz += w * z;
+      sum_ww += w * w;
+    }
 
     return { r, got, exp, pct, prob };
   });
 
-  const oz = twz / tw;
-  const op = normCDF(oz);
+  let Z_combined = sum_ww > 0 ? sum_wz / Math.sqrt(sum_ww) : 0;
+  const op = normCDF(Z_combined);
   const score = Math.max(1, Math.min(10, Math.round((1 + 9 * op) * 10) / 10));
 
   return {

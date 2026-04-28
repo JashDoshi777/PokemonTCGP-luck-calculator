@@ -232,8 +232,7 @@ function Calculator({ mode, selectedPack, isModal }) {
             )}
 
             {RARITIES.filter(r => {
-              const isDeluxe = mode === 'perset' && selectedPack?.id === 'deluxe';
-              if (isDeluxe && r.id === 's1') return false;
+              if (r.packSpecific && r.packSpecific !== selectedPack?.id) return false;
               return !r.shinyOnly || mode === 'overall' || selectedPack.hasShiny;
             }).map(r => (
               <div key={r.id} className="glass-card" style={{ padding: '24px 10px', display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -384,11 +383,11 @@ function LandingPage({ setView }) {
         </div>
         <img src="/images/pocket_logo.webp" alt="Pokemon TCG Pocket" className="floating-card" style={{ width: '120px', height: '120px', objectFit: 'cover', marginBottom: '32px', zIndex: 1, borderRadius: '28px', boxShadow: '0 20px 50px rgba(0,0,0,0.2)' }} />
         <h1 className="hero-large text-gradient" style={{ marginBottom: '24px', zIndex: 1 }}>
-          Track Your Daily Pulls.<br />
-          <span className="text-dynamic">Master the Wonder Pick.</span>
+          Calculate Your Pack Luck.<br />
+          <span className="text-dynamic">Defeat the Gacha.</span>
         </h1>
         <p className="section-subtitle" style={{ maxWidth: '700px', margin: '0 auto 48px', zIndex: 1 }}>
-          The ultimate analytical companion for Pokémon TCG Pocket. Calculate the exact odds of your daily booster packs and Wonder Picks.
+          The ultimate analytical companion for Pokémon TCG Pocket. Calculate the exact odds of your booster packs and discover your true luck score.
         </p>
         <button className="btn-super" onClick={() => { setView('calc'); window.scrollTo(0,0); }} style={{ transform: 'scale(1.1)', zIndex: 1 }}>
           Access the Rotom Dex
@@ -403,11 +402,11 @@ function LandingPage({ setView }) {
             <div style={{ position: 'relative', width: '100%', height: '250px' }}>
               <div className="text-step-1" style={{ position: 'absolute', top: 0, left: 0, width: '100%' }}>
                 <h2 className="section-title text-gradient">Analyze Daily Packs.</h2>
-                <p className="section-subtitle">Log your two daily booster packs. Our engine maps directly to official Genetic Apex sub-rates.</p>
+                <p className="section-subtitle">Log your daily booster packs. Our engine maps directly to official expansion sub-rates.</p>
               </div>
               <div className="text-step-2" style={{ position: 'absolute', top: 0, left: 0, width: '100%', opacity: 0 }}>
-                <h2 className="section-title text-gradient">Wonder Pick Analytics.</h2>
-                <p className="section-subtitle">Did you really get lucky pulling that Charizard ex from a Wonder Pick? Find out instantly.</p>
+                <h2 className="section-title text-gradient">Evaluate Your Luck.</h2>
+                <p className="section-subtitle">Did you really get lucky pulling that Charizard ex? Find out instantly with our Z-Score engine.</p>
               </div>
               <div className="text-step-3" style={{ position: 'absolute', top: 0, left: 0, width: '100%', opacity: 0 }}>
                 <h2 className="section-title text-gradient">Hunt Immersive Art.</h2>
@@ -434,29 +433,29 @@ function LandingPage({ setView }) {
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           
           <div style={{ textAlign: 'center', marginBottom: '80px' }}>
-            <h2 className="hero-large" style={{ color: '#1d1d1f', marginBottom: '16px' }}>Data-Driven.</h2>
-            <h2 className="hero-large" style={{ color: 'var(--accent)', marginBottom: '24px' }}>Trainer Approved.</h2>
-            <p className="section-subtitle" style={{ maxWidth: '600px', margin: '0 auto' }}>No more guessing. No more myths. Decode the exact mathematical standings of the entire global playerbase.</p>
+            <h2 className="hero-large" style={{ color: '#1d1d1f', marginBottom: '16px' }}>Calculate.</h2>
+            <h2 className="hero-large" style={{ color: 'var(--accent)', marginBottom: '24px' }}>Evaluate Luck.</h2>
+            <p className="section-subtitle" style={{ maxWidth: '600px', margin: '0 auto' }}>No more guessing. No more myths. Decode the exact mathematical luck of your Pokémon TCG Pocket pulls.</p>
           </div>
 
           <div className="simple-reveal-grid archives-grid" style={{ display: 'grid', gap: '40px' }}>
             
             <div className="simple-reveal-card" style={{ background: '#fff', borderRadius: '40px', padding: '60px', boxShadow: '0 20px 60px rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-              <div style={{ fontSize: '5rem', fontWeight: 800, marginBottom: '16px', background: 'linear-gradient(135deg, #1d1d1f, #888)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>100%</div>
-              <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1d1d1f', marginBottom: '16px' }}>Client-Side Speed</h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.5 }}>Zero loading screens. Calculations run instantly directly in your browser.</p>
+              <div style={{ fontSize: '5rem', fontWeight: 800, marginBottom: '16px', background: 'linear-gradient(135deg, #1d1d1f, #888)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>Pure</div>
+              <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1d1d1f', marginBottom: '16px' }}>Math Engine</h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.5 }}>Calculates your exact luck using standard deviations and Poisson distribution.</p>
             </div>
 
             <div className="simple-reveal-card" style={{ background: '#fff', borderRadius: '40px', padding: '60px', boxShadow: '0 20px 60px rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-              <div style={{ fontSize: '5rem', fontWeight: 800, marginBottom: '16px', background: 'linear-gradient(135deg, #1d1d1f, #888)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>Live</div>
-              <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1d1d1f', marginBottom: '16px' }}>Expansion Tracking</h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.5 }}>Algorithms dynamically adapt to the specific expansion you are opening.</p>
+              <div style={{ fontSize: '5rem', fontWeight: 800, marginBottom: '16px', background: 'linear-gradient(135deg, #1d1d1f, #888)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>All</div>
+              <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1d1d1f', marginBottom: '16px' }}>Pack Sets</h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.5 }}>Supports overall blended calculations or specific pack probabilities.</p>
             </div>
 
             <div className="simple-reveal-card" style={{ background: '#1d1d1f', borderRadius: '40px', padding: '60px', boxShadow: '0 30px 60px rgba(0,0,0,0.15)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-              <div style={{ fontSize: '5rem', fontWeight: 800, marginBottom: '16px', background: 'linear-gradient(135deg, var(--accent), #ff9eb5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>Pro</div>
-              <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#fff', marginBottom: '16px' }}>Rotom Analytics</h3>
-              <p style={{ color: '#86868b', fontSize: '1.1rem', lineHeight: 1.5 }}>Receive a personalized Professor's Evaluation based on your precise Z-Score.</p>
+              <div style={{ fontSize: '5rem', fontWeight: 800, marginBottom: '16px', background: 'linear-gradient(135deg, var(--accent), #ff9eb5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>1-10</div>
+              <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#fff', marginBottom: '16px' }}>Luck Score</h3>
+              <p style={{ color: '#86868b', fontSize: '1.1rem', lineHeight: 1.5 }}>Receive a personalized 1 to 10 score evaluating your exact pack luck.</p>
             </div>
 
           </div>
