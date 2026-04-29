@@ -8,9 +8,19 @@ import { PACKS, RARITIES, ICONS } from './data';
 import { runLuckCalculation } from './math';
 
 function App() {
-  const [view, setView] = useState('home');
-  const [history, setHistory] = useState([]);
+  const [view, setView] = useState(() => {
+    return sessionStorage.getItem('pokemontcgp-view') || 'home';
+  });
+  const [history, setHistory] = useState(() => {
+    const saved = sessionStorage.getItem('pokemontcgp-history');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [dexSelectedPack, setDexSelectedPack] = useState(null);
+
+  useEffect(() => {
+    sessionStorage.setItem('pokemontcgp-view', view);
+    sessionStorage.setItem('pokemontcgp-history', JSON.stringify(history));
+  }, [view, history]);
 
   const handleSetView = (newView) => {
     if (newView === view) return;
@@ -140,10 +150,27 @@ function App() {
 }
 
 function Calculator({ mode, selectedPack, isModal }) {
-  const [packsOpened, setPacksOpened] = useState(0);
-  const [deluxePacksOpened, setDeluxePacksOpened] = useState(0);
-  const [counts, setCounts] = useState({});
+  const storageKey = `pokemontcgp-calc-${mode}-${selectedPack?.id || 'overall'}`;
+  
+  const [packsOpened, setPacksOpened] = useState(() => {
+    const saved = sessionStorage.getItem(`${storageKey}-packs`);
+    return saved ? parseInt(saved) : 0;
+  });
+  const [deluxePacksOpened, setDeluxePacksOpened] = useState(() => {
+    const saved = sessionStorage.getItem(`${storageKey}-deluxePacks`);
+    return saved ? parseInt(saved) : 0;
+  });
+  const [counts, setCounts] = useState(() => {
+    const saved = sessionStorage.getItem(`${storageKey}-counts`);
+    return saved ? JSON.parse(saved) : {};
+  });
   const [results, setResults] = useState(null);
+
+  useEffect(() => {
+    sessionStorage.setItem(`${storageKey}-packs`, packsOpened.toString());
+    sessionStorage.setItem(`${storageKey}-deluxePacks`, deluxePacksOpened.toString());
+    sessionStorage.setItem(`${storageKey}-counts`, JSON.stringify(counts));
+  }, [packsOpened, deluxePacksOpened, counts, storageKey]);
   
   const resultsRef = useRef(null);
 
@@ -180,7 +207,7 @@ function Calculator({ mode, selectedPack, isModal }) {
         <h2 className={isModal ? "ios-section-header" : "text-gradient"} style={!isModal ? { fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: '40px' } : {}}>Trainer's Log</h2>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: isModal ? '16px' : '32px' }}>
-          <div className={isModal ? "ios-card" : ""} style={!isModal ? { display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' } : {}}>
+          <div className={isModal ? "ios-card" : ""} style={!isModal ? { display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' } : { width: '100%' }}>
             <div>
               <div style={{ fontWeight: 700, fontSize: isModal ? '1.1rem' : '1.4rem' }}>{mode === 'overall' ? 'Standard Packs' : 'Total Packs'}</div>
               <div style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>Enter the exact number opened</div>
@@ -193,7 +220,7 @@ function Calculator({ mode, selectedPack, isModal }) {
           </div>
           
           {mode === 'overall' && (
-            <div className={isModal ? "ios-card" : ""} style={!isModal ? { display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' } : {}}>
+            <div className={isModal ? "ios-card" : ""} style={!isModal ? { display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' } : { width: '100%' }}>
               <div>
                 <div style={{ fontWeight: 700, fontSize: isModal ? '1.1rem' : '1.4rem' }}>Deluxe ex Packs</div>
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>These guarantee an ex, handled separately!</div>
@@ -206,27 +233,31 @@ function Calculator({ mode, selectedPack, isModal }) {
             </div>
           )}
 
-          <div className="rarity-grid" style={{ marginTop: isModal ? '0' : '20px' }}>
+          <div className={isModal ? "" : "rarity-grid"} style={isModal ? { display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' } : { marginTop: '20px' }}>
             {!(mode === 'perset' && selectedPack?.id === 'deluxe') && (
-              <div className="glass-card" style={{ padding: '24px 10px', display: 'flex', flexDirection: 'column', height: '100%' }}>
-                <div dangerouslySetInnerHTML={{ __html: ICONS.god }} style={{ height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(1.5)' }} />
-                <div style={{ fontWeight: 700, margin: '20px 0 16px', fontSize: '1.05rem', letterSpacing: '-0.01em', textAlign: 'center', flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>God Pack</div>
-                <div className="stepper-ultra" style={{ padding: '4px 6px', gap: '4px', width: '100%', justifyContent: 'space-between', marginTop: 'auto' }}>
-                  <button className="stepper-btn" style={{ width: '26px', height: '26px', fontSize: '1rem' }} onClick={() => adjustRarity('godPack', -1)}>-</button>
-                  <input type="text" className="stepper-input" style={{ width: '100%', minWidth: 0, fontSize: '1.1rem', padding: 0 }} value={counts.godPack || 0} onChange={e => { const v = e.target.value === '' ? 0 : parseInt(e.target.value); if (!isNaN(v)) setRarity('godPack', v); }} />
-                  <button className="stepper-btn" style={{ width: '26px', height: '26px', fontSize: '1rem' }} onClick={() => adjustRarity('godPack', 1)}>+</button>
+              <div className={isModal ? "ios-card" : "glass-card"} style={!isModal ? { padding: '24px 10px', display: 'flex', flexDirection: 'column', height: '100%' } : { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', gap: '16px', width: '100%' }}>
+                <div style={isModal ? { display: 'flex', alignItems: 'center', gap: '16px' } : { display: 'contents' }}>
+                  <div dangerouslySetInnerHTML={{ __html: ICONS.god }} style={{ height: isModal ? '24px' : '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: isModal ? 'scale(1.2)' : 'scale(1.5)' }} />
+                  <div style={{ fontWeight: 700, margin: isModal ? '0' : '20px 0 16px', fontSize: '1.05rem', letterSpacing: '-0.01em', textAlign: isModal ? 'left' : 'center', flexGrow: isModal ? 0 : 1, display: 'flex', alignItems: 'center', justifyContent: isModal ? 'flex-start' : 'center' }}>God Pack</div>
+                </div>
+                <div className="stepper-ultra" style={!isModal ? { padding: '4px 6px', gap: '4px', width: '100%', justifyContent: 'space-between', marginTop: 'auto' } : { width: '130px', padding: '4px 6px' }}>
+                  <button className="stepper-btn" style={{ width: isModal ? '28px' : '26px', height: isModal ? '28px' : '26px', fontSize: '1rem' }} onClick={() => adjustRarity('godPack', -1)}>-</button>
+                  <input type="text" className="stepper-input" style={{ width: '100%', minWidth: 0, fontSize: isModal ? '1.2rem' : '1.1rem', padding: 0 }} value={counts.godPack || 0} onChange={e => { const v = e.target.value === '' ? 0 : parseInt(e.target.value); if (!isNaN(v)) setRarity('godPack', v); }} />
+                  <button className="stepper-btn" style={{ width: isModal ? '28px' : '26px', height: isModal ? '28px' : '26px', fontSize: '1rem' }} onClick={() => adjustRarity('godPack', 1)}>+</button>
                 </div>
               </div>
             )}
 
             {mode === 'perset' && selectedPack?.id === 'megashine' && (
-              <div className="glass-card" style={{ padding: '24px 10px', display: 'flex', flexDirection: 'column', height: '100%' }}>
-                <div dangerouslySetInnerHTML={{ __html: ICONS.god }} style={{ height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(1.5)', filter: 'hue-rotate(180deg)' }} />
-                <div style={{ fontWeight: 700, margin: '20px 0 16px', fontSize: '1.05rem', letterSpacing: '-0.01em', textAlign: 'center', flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Shiny God Pack</div>
-                <div className="stepper-ultra" style={{ padding: '4px 6px', gap: '4px', width: '100%', justifyContent: 'space-between', marginTop: 'auto' }}>
-                  <button className="stepper-btn" style={{ width: '26px', height: '26px', fontSize: '1rem' }} onClick={() => adjustRarity('shinyGodPack', -1)}>-</button>
-                  <input type="text" className="stepper-input" style={{ width: '100%', minWidth: 0, fontSize: '1.1rem', padding: 0 }} value={counts.shinyGodPack || 0} onChange={e => { const v = e.target.value === '' ? 0 : parseInt(e.target.value); if (!isNaN(v)) setRarity('shinyGodPack', v); }} />
-                  <button className="stepper-btn" style={{ width: '26px', height: '26px', fontSize: '1rem' }} onClick={() => adjustRarity('shinyGodPack', 1)}>+</button>
+              <div className={isModal ? "ios-card" : "glass-card"} style={!isModal ? { padding: '24px 10px', display: 'flex', flexDirection: 'column', height: '100%' } : { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', gap: '16px', width: '100%' }}>
+                <div style={isModal ? { display: 'flex', alignItems: 'center', gap: '16px' } : { display: 'contents' }}>
+                  <div dangerouslySetInnerHTML={{ __html: ICONS.god }} style={{ height: isModal ? '24px' : '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: isModal ? 'scale(1.2)' : 'scale(1.5)', filter: 'hue-rotate(180deg)' }} />
+                  <div style={{ fontWeight: 700, margin: isModal ? '0' : '20px 0 16px', fontSize: '1.05rem', letterSpacing: '-0.01em', textAlign: isModal ? 'left' : 'center', flexGrow: isModal ? 0 : 1, display: 'flex', alignItems: 'center', justifyContent: isModal ? 'flex-start' : 'center' }}>Shiny God Pack</div>
+                </div>
+                <div className="stepper-ultra" style={!isModal ? { padding: '4px 6px', gap: '4px', width: '100%', justifyContent: 'space-between', marginTop: 'auto' } : { width: '130px', padding: '4px 6px' }}>
+                  <button className="stepper-btn" style={{ width: isModal ? '28px' : '26px', height: isModal ? '28px' : '26px', fontSize: '1rem' }} onClick={() => adjustRarity('shinyGodPack', -1)}>-</button>
+                  <input type="text" className="stepper-input" style={{ width: '100%', minWidth: 0, fontSize: isModal ? '1.2rem' : '1.1rem', padding: 0 }} value={counts.shinyGodPack || 0} onChange={e => { const v = e.target.value === '' ? 0 : parseInt(e.target.value); if (!isNaN(v)) setRarity('shinyGodPack', v); }} />
+                  <button className="stepper-btn" style={{ width: isModal ? '28px' : '26px', height: isModal ? '28px' : '26px', fontSize: '1rem' }} onClick={() => adjustRarity('shinyGodPack', 1)}>+</button>
                 </div>
               </div>
             )}
@@ -235,13 +266,15 @@ function Calculator({ mode, selectedPack, isModal }) {
               if (r.packSpecific && r.packSpecific !== selectedPack?.id) return false;
               return !r.shinyOnly || mode === 'overall' || selectedPack.hasShiny;
             }).map(r => (
-              <div key={r.id} className="glass-card" style={{ padding: '24px 10px', display: 'flex', flexDirection: 'column', height: '100%' }}>
-                <div dangerouslySetInnerHTML={{ __html: r.icon }} style={{ height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(1.5)' }} />
-                <div style={{ fontWeight: 700, margin: '20px 0 16px', fontSize: '1.05rem', letterSpacing: '-0.01em', textAlign: 'center', flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{r.name}</div>
-                <div className="stepper-ultra" style={{ padding: '4px 6px', gap: '4px', width: '100%', justifyContent: 'space-between', marginTop: 'auto' }}>
-                  <button className="stepper-btn" style={{ width: '26px', height: '26px', fontSize: '1rem' }} onClick={() => adjustRarity(r.id, -1)}>-</button>
-                  <input type="text" className="stepper-input" style={{ width: '100%', minWidth: 0, fontSize: '1.1rem', padding: 0 }} value={counts[r.id] || 0} onChange={e => { const v = e.target.value === '' ? 0 : parseInt(e.target.value); if (!isNaN(v)) setRarity(r.id, v); }} />
-                  <button className="stepper-btn" style={{ width: '26px', height: '26px', fontSize: '1rem' }} onClick={() => adjustRarity(r.id, 1)}>+</button>
+              <div key={r.id} className={isModal ? "ios-card" : "glass-card"} style={!isModal ? { padding: '24px 10px', display: 'flex', flexDirection: 'column', height: '100%' } : { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', gap: '16px', width: '100%' }}>
+                <div style={isModal ? { display: 'flex', alignItems: 'center', gap: '16px' } : { display: 'contents' }}>
+                  <div dangerouslySetInnerHTML={{ __html: r.icon }} style={{ height: isModal ? '24px' : '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: isModal ? 'scale(1.2)' : 'scale(1.5)' }} />
+                  <div style={{ fontWeight: 700, margin: isModal ? '0' : '20px 0 16px', fontSize: '1.05rem', letterSpacing: '-0.01em', textAlign: isModal ? 'left' : 'center', flexGrow: isModal ? 0 : 1, display: 'flex', alignItems: 'center', justifyContent: isModal ? 'flex-start' : 'center' }}>{r.name}</div>
+                </div>
+                <div className="stepper-ultra" style={!isModal ? { padding: '4px 6px', gap: '4px', width: '100%', justifyContent: 'space-between', marginTop: 'auto' } : { width: '130px', padding: '4px 6px' }}>
+                  <button className="stepper-btn" style={{ width: isModal ? '28px' : '26px', height: isModal ? '28px' : '26px', fontSize: '1rem' }} onClick={() => adjustRarity(r.id, -1)}>-</button>
+                  <input type="text" className="stepper-input" style={{ width: '100%', minWidth: 0, fontSize: isModal ? '1.2rem' : '1.1rem', padding: 0 }} value={counts[r.id] || 0} onChange={e => { const v = e.target.value === '' ? 0 : parseInt(e.target.value); if (!isNaN(v)) setRarity(r.id, v); }} />
+                  <button className="stepper-btn" style={{ width: isModal ? '28px' : '26px', height: isModal ? '28px' : '26px', fontSize: '1rem' }} onClick={() => adjustRarity(r.id, 1)}>+</button>
                 </div>
               </div>
             ))}
@@ -283,16 +316,92 @@ function Calculator({ mode, selectedPack, isModal }) {
               </div>
             </div>
 
-            <div className={isModal ? "ios-card" : ""} style={!isModal ? { background: 'rgba(255,255,255,0.5)', borderRadius: 'var(--radius-lg)', padding: '0 24px' } : { display: 'flex', flexDirection: 'column', padding: '12px 24px', gap: '0', alignItems: 'stretch' }}>
-              {results.results.map(({ r, got, exp }) => (
-                <div key={r.id} className="breakdown-row">
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{r.name}</div>
-                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '4px', fontWeight: 500 }}>Expected: {exp.toFixed(2)}</div>
-                  </div>
-                  <div style={{ fontWeight: 800, fontSize: '1.4rem', color: got > exp ? 'var(--accent)' : 'var(--text-main)' }}>{got}</div>
+            <div style={{ marginTop: '24px' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1d1d1f', marginBottom: '20px', paddingLeft: isModal ? '20px' : '8px' }}>Luck Distribution</h3>
+              <div className={isModal ? "ios-card" : ""} style={!isModal ? { background: 'rgba(255,255,255,0.7)', borderRadius: 'var(--radius-lg)', padding: '24px' } : { display: 'flex', flexDirection: 'column', padding: '20px', gap: '20px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {results.results.map(({ r, got, exp, pct }) => {
+                    const percentage = pct * 100;
+                    let barColor = '#34c759'; 
+                    let tagText = 'Incredible';
+                    let tagColor = '#e5f9e7';
+                    let tagTextColor = '#34c759';
+
+                    if (percentage < 30) {
+                      barColor = '#ff3b30'; 
+                      tagText = 'Unlucky';
+                      tagColor = '#ffebe9';
+                      tagTextColor = '#ff3b30';
+                    } else if (percentage < 70) {
+                      barColor = '#007aff'; 
+                      tagText = 'Average';
+                      tagColor = '#e5f0ff';
+                      tagTextColor = '#007aff';
+                    } else if (percentage >= 95) {
+                      tagText = 'Legendary';
+                      barColor = '#af52de'; 
+                      tagColor = '#f4e5fa';
+                      tagTextColor = '#af52de';
+                    }
+
+                    return (
+                      <div key={r.id} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div dangerouslySetInnerHTML={{ __html: r.icon }} style={{ height: '24px', display: 'flex', alignItems: 'center' }} />
+                            <span style={{ fontWeight: 800, fontSize: '1.1rem', color: '#1d1d1f' }}>&times;{got}</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                             <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>Top {(100 - percentage).toFixed(2)}%</span>
+                             <div style={{ background: tagColor, color: tagTextColor, padding: '4px 10px', borderRadius: '16px', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                               {tagText}
+                             </div>
+                          </div>
+                        </div>
+                        <div style={{ width: '100%', height: '10px', background: 'rgba(0,0,0,0.06)', borderRadius: '5px', overflow: 'hidden', position: 'relative' }}>
+                          <div style={{ width: `${Math.max(2, percentage)}%`, height: '100%', background: barColor, borderRadius: '5px', transition: 'width 1s cubic-bezier(0.16, 1, 0.3, 1)' }} />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
+              </div>
+            </div>
+
+            <div style={{ marginTop: '32px' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1d1d1f', marginBottom: '20px', paddingLeft: isModal ? '20px' : '8px' }}>Average Packs per Card</h3>
+              <div className={isModal ? "ios-card" : ""} style={!isModal ? { background: 'rgba(255,255,255,0.7)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' } : { borderRadius: '20px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.05)', background: '#fff' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid rgba(0,0,0,0.05)' }}>
+                      <th style={{ padding: '16px 20px', textAlign: 'left', fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-muted)' }}>Rarity</th>
+                      <th style={{ padding: '16px 20px', fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: 1.2 }}>Standard<br/><span style={{ fontSize: '0.7rem', fontWeight: 400 }}>Packs/card</span></th>
+                      <th style={{ padding: '16px 20px', fontWeight: 700, fontSize: '0.9rem', color: '#1d1d1f', lineHeight: 1.2 }}>Mine<br/><span style={{ fontSize: '0.7rem', fontWeight: 500 }}>Packs/card</span></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {results.results.map(({ r, got, prob }, index) => {
+                      const totalPacksEvaluated = mode === 'overall' ? packsOpened + deluxePacksOpened : packsOpened;
+                      const standardPacks = prob > 0 ? (1 / prob).toFixed(1) : '-';
+                      const minePacks = got > 0 ? (totalPacksEvaluated / got).toFixed(1) : '-';
+                      
+                      return (
+                        <tr key={r.id} style={{ borderBottom: index === results.results.length - 1 ? 'none' : '1px solid rgba(0,0,0,0.04)' }}>
+                          <td style={{ padding: '16px 20px', textAlign: 'left' }}>
+                            <div dangerouslySetInnerHTML={{ __html: r.icon }} style={{ height: '24px', display: 'flex', alignItems: 'center' }} />
+                          </td>
+                          <td style={{ padding: '16px 20px', fontWeight: 600, color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums', fontSize: '1.05rem' }}>
+                            {standardPacks}
+                          </td>
+                          <td style={{ padding: '16px 20px', fontWeight: 800, color: '#1d1d1f', fontVariantNumeric: 'tabular-nums', fontSize: '1.05rem' }}>
+                            {minePacks}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         ) : (

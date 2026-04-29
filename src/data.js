@@ -82,28 +82,13 @@ export const SLOT_RATES = {
 };
 
 export const ICONS = {
-  crown: `<img src="/icons/crown.png" alt="Crown" style="height: 24px; object-fit: contain;" />`,
-  '3star': `<div style="display: flex; gap: 2px;">
-    <img src="/icons/star.png" alt="Star" style="height: 18px; object-fit: contain;" />
-    <img src="/icons/star.png" alt="Star" style="height: 18px; object-fit: contain;" />
-    <img src="/icons/star.png" alt="Star" style="height: 18px; object-fit: contain;" />
-  </div>`,
-  '2star': `<div style="display: flex; gap: 2px;">
-    <img src="/icons/star.png" alt="Star" style="height: 18px; object-fit: contain;" />
-    <img src="/icons/star.png" alt="Star" style="height: 18px; object-fit: contain;" />
-  </div>`,
-  '1star': `<img src="/icons/star.png" alt="Star" style="height: 18px; object-fit: contain;" />`,
-  '4d': `<div style="display: flex; gap: 1px;">
-    <img src="/icons/diamond.png" alt="Diamond" style="height: 15px; object-fit: contain;" />
-    <img src="/icons/diamond.png" alt="Diamond" style="height: 15px; object-fit: contain;" />
-    <img src="/icons/diamond.png" alt="Diamond" style="height: 15px; object-fit: contain;" />
-    <img src="/icons/diamond.png" alt="Diamond" style="height: 15px; object-fit: contain;" />
-  </div>`,
-  s2: `<div style="display: flex; gap: 4px;">
-    <img src="/icons/shiny.png" alt="Shiny" style="height: 20px; object-fit: contain;" />
-    <img src="/icons/shiny.png" alt="Shiny" style="height: 20px; object-fit: contain;" />
-  </div>`,
-  s1: `<img src="/icons/shiny.png" alt="Shiny" style="height: 20px; object-fit: contain;" />`,
+  crown: `<img src="/icons/crown.webp" alt="Crown" style="height: 24px; object-fit: contain;" />`,
+  '3star': `<img src="/icons/3star.webp" alt="3-Star" style="height: 24px; object-fit: contain;" />`,
+  '2star': `<img src="/icons/2star.webp" alt="2-Star" style="height: 24px; object-fit: contain;" />`,
+  '1star': `<img src="/icons/1star.webp" alt="1-Star" style="height: 24px; object-fit: contain;" />`,
+  '4d': `<img src="/icons/4d.webp" alt="4-Diamond" style="height: 24px; object-fit: contain;" />`,
+  s2: `<img src="/icons/s2.webp" alt="2-Star Shiny" style="height: 24px; object-fit: contain;" />`,
+  s1: `<img src="/icons/s1.webp" alt="1-Star Shiny" style="height: 24px; object-fit: contain;" />`,
   god: `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <linearGradient id="rainbow" x1="0%" y1="0%" x2="100%" y2="100%">

@@ -400,6 +400,7 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
   display: flex;
   flex-wrap: wrap;
   gap: 32px;
+  align-items: flex-start;
 }
 
 .layout-grid > div {
@@ -763,6 +764,7 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
   display: flex !important;
   flex-direction: column !important;
   gap: 24px !important;
+  align-items: stretch !important;
 }
 
 .ios-section {
