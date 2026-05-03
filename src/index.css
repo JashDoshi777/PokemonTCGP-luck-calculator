@@ -11,7 +11,15 @@
   
   /* Colors */
   --text-main: #1d1d1f;
-  --text-muted: #515154;
+  --text-muted: #86868b;
+
+  /* Pokemon Types */
+  --color-water: #4A90E2;
+  --color-darkness: #333333;
+  --color-colorless: #E0E0E0;
+  --color-lightning: #F5A623;
+  --color-fire: #E15554;
+  
   --accent: #FF3B30; /* Apple Red */
   --accent-glow: rgba(255, 59, 48, 0.3);
   
@@ -36,6 +44,7 @@ body, html {
   background-color: transparent;
   color: var(--text-main);
   scroll-behavior: smooth;
+  overflow-x: hidden; /* Prevent horizontal scroll blowout */
 }
 
 /* CRAZY BACKGROUND: Moving Gradients (macOS Sonoma style) */
@@ -249,6 +258,10 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
+.auth-section {
+  margin-left: auto;
+}
+
 .ios-back-btn {
   position: fixed;
   top: 24px;
@@ -276,8 +289,8 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
 
 @media (max-width: 768px) {
   .ios-back-btn {
-    top: 16px;
-    left: 16px;
+    top: 24px;
+    left: 80px;
     padding: 6px 14px;
     font-size: 0.9rem;
   }
@@ -957,3 +970,307 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
   }
 }
 
+
+
+/* Apple-Style Global Carousel Navigation */
+.carousel-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1d1d1f;
+  cursor: pointer;
+  z-index: 30;
+  transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.carousel-nav:hover {
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transform: translateY(-50%) scale(1.05);
+}
+
+.carousel-nav:active {
+  transform: translateY(-50%) scale(0.92);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.carousel-nav.left {
+  left: 0;
+}
+
+.carousel-nav.right {
+  right: 0;
+}
+
+@media (max-width: 768px) {
+  .carousel-nav {
+    display: none;
+  }
+}
+
+
+/* Apple-Style Global Carousel Navigation */
+.apple-carousel-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1d1d1f;
+  cursor: pointer;
+  z-index: 30;
+  transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.apple-carousel-nav:hover {
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transform: translateY(-50%) scale(1.05);
+}
+
+.apple-carousel-nav:active {
+  transform: translateY(-50%) scale(0.92);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.apple-carousel-nav.left {
+  left: 0;
+}
+
+.apple-carousel-nav.right {
+  right: 0;
+}
+
+@media (max-width: 768px) {
+  .apple-carousel-nav {
+    display: none;
+  }
+}
+
+/* =========================================
+   COMPREHENSIVE RESPONSIVE OVERRIDES
+   These rules strictly apply ONLY to tablets and mobile devices
+   to preserve the desktop view exactly as it was.
+   ========================================= */
+
+.mobile-menu-toggle {
+  display: none;
+}
+
+.mobile-sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  /* Navigation Tablet Scaling */
+  .nav-ultra {
+    width: 95%;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    padding: 8px 12px;
+    border-radius: 100px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .nav-ultra::-webkit-scrollbar {
+    display: none;
+  }
+  .nav-pill {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .auth-section {
+    margin-left: auto;
+    width: auto;
+    flex-shrink: 0;
+  }
+
+  /* App Content Padding */
+  #root > div[style*="paddingTop"] {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  /* Archives Grid Tablet */
+  .archives-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+  }
+
+  /* Landing Page Tablet Alignment */
+  .pin-content {
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding-top: 100px;
+  }
+  .pin-text {
+    padding-right: 0 !important;
+    text-align: center;
+    margin-bottom: 30px;
+    width: 100%;
+  }
+  .pin-text > div > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .pin-image-container {
+    height: 60vh;
+  }
+
+  /* Bottom Sheet sizing for tablet */
+  .ios-bottom-sheet {
+    max-width: 90%;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Mobile Menu Toggle Button */
+  .mobile-menu-toggle {
+    display: flex;
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 2001; /* Above sidebar */
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(240, 240, 245, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-main);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .mobile-menu-toggle:active {
+    transform: scale(0.92);
+  }
+
+  /* Sidebar Backdrop */
+  .mobile-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1999;
+    animation: fadeIn 0.3s ease forwards;
+  }
+
+  /* Navigation Sidebar */
+  .nav-ultra {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    height: 100vh;
+    border-radius: 0 32px 32px 0;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 80px 24px 40px; /* Space for toggle button */
+    gap: 12px;
+    transform: translateX(-100%);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 2000;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    border-top: none;
+    border-bottom: none;
+    border-left: none;
+    box-shadow: 20px 0 60px rgba(0,0,0,0.1);
+    background: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(50px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(50px) saturate(200%) !important;
+  }
+  .nav-ultra.is-open {
+    transform: translateX(0);
+  }
+
+  /* Navigation Pills inside Sidebar */
+  .nav-pill {
+    padding: 16px 20px;
+    font-size: 1.05rem;
+    width: 100%;
+    text-align: left;
+    flex: 0 0 auto !important;
+  }
+  
+  /* Auth Section at bottom of Sidebar */
+  .auth-section {
+    position: relative !important;
+    bottom: auto !important;
+    right: auto !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+    border-top: 1px solid rgba(0,0,0,0.08) !important;
+    border-radius: 0 !important;
+    margin-top: auto !important;
+    padding: 24px 0 0 0 !important;
+    width: 100% !important;
+    z-index: 10 !important;
+    justify-content: flex-start;
+  }
+  .auth-section .nav-pill {
+    width: 100% !important;
+    padding: 16px !important;
+    font-size: 1.05rem !important;
+  }
+
+  /* Glass Panels Mobile */
+  .glass-panel {
+    padding: 20px !important;
+    border-radius: var(--radius-lg) !important;
+  }
+
+  /* Headers Mobile */
+  .hero-large {
+    font-size: min(4rem, 12vw) !important;
+  }
+  .section-title {
+    font-size: min(3rem, 10vw) !important;
+  }
+
+  /* Bottom Sheet Mobile */
+  .ios-backdrop {
+    align-items: flex-end;
+  }
+  .ios-bottom-sheet {
+    max-width: 100% !important;
+    border-radius: 32px 32px 0 0 !important;
+    max-height: 85vh;
+  }
+  
+  /* Landing page empty state text size */
+  .empty-state {
+    padding: 40px 16px;
+    font-size: 0.9rem;
+  }
+}

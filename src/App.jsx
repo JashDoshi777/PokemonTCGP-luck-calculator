@@ -2,18 +2,32 @@ import React, { useState, useRef, useEffect } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { ReactLenis } from 'lenis/react';
 
 gsap.registerPlugin(ScrollTrigger);
 import { PACKS, RARITIES, ICONS } from './data';
 import { runLuckCalculation } from './math';
 
-function App() {
+import { AppProvider } from './context/AppContext';
+import MetaDecks from './pages/MetaDecks';
+import DeckBuilder from './pages/DeckBuilder';
+import CollectionTracker from './pages/CollectionTracker';
+import LoginModal from './components/LoginModal';
+import { useAppContext } from './context/AppContext';
+
+function AppContent() {
+  const { user, logout } = useAppContext();
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [view, setView] = useState(() => {
     return sessionStorage.getItem('pokemontcgp-view') || 'home';
   });
   const [history, setHistory] = useState(() => {
     const saved = sessionStorage.getItem('pokemontcgp-history');
     return saved ? JSON.parse(saved) : [];
+  });
+  const [visitedViews, setVisitedViews] = useState(() => {
+    return new Set([sessionStorage.getItem('pokemontcgp-view') || 'home']);
   });
   const [dexSelectedPack, setDexSelectedPack] = useState(null);
 
@@ -22,9 +36,20 @@ function App() {
     sessionStorage.setItem('pokemontcgp-history', JSON.stringify(history));
   }, [view, history]);
 
+  useEffect(() => {
+    if (dexSelectedPack || showLoginModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [dexSelectedPack, showLoginModal]);
+
   const handleSetView = (newView) => {
+    setIsMobileMenuOpen(false);
     if (newView === view) return;
     setHistory(prev => [...prev, view]);
+    setVisitedViews(prev => new Set(prev).add(newView));
     setView(newView);
     setDexSelectedPack(null);
     window.scrollTo(0, 0);
@@ -62,12 +87,49 @@ function App() {
         </button>
       )}
 
-      <nav className="nav-ultra">
-        {['home', 'calc', 'dex'].map(v => (
+      {/* MOBILE SIDEBAR OVERLAY */}
+      {isMobileMenuOpen && (
+        <div 
+          className="mobile-sidebar-backdrop" 
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* MOBILE TOGGLE BUTTON */}
+      <button 
+        className="mobile-menu-toggle"
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          {isMobileMenuOpen ? (
+             <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+          ) : (
+             <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+          )}
+        </svg>
+      </button>
+
+      <nav className={`nav-ultra ${isMobileMenuOpen ? 'is-open' : ''}`}>
+        {['home', 'calc', 'dex', 'meta', 'decks', 'collection'].map(v => (
           <button key={v} className={`nav-pill ${view === v ? 'active' : ''}`} onClick={() => handleSetView(v)}>
             {v.charAt(0).toUpperCase() + v.slice(1)}
           </button>
         ))}
+        
+        <div className="auth-section" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {user ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-muted)' }}>{user}</span>
+              <button className="nav-pill" onClick={() => { logout(); setIsMobileMenuOpen(false); }} style={{ background: 'rgba(255, 59, 48, 0.1)', color: '#ff3b30' }}>
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <button className="nav-pill" onClick={() => { setShowLoginModal(true); setIsMobileMenuOpen(false); }} style={{ background: 'linear-gradient(135deg, #FF3B30 0%, #FF2D55 100%)', color: '#fff', fontWeight: 700 }}>
+              Sign In
+            </button>
+          )}
+        </div>
       </nav>
 
       <div style={{ paddingTop: '100px', paddingBottom: '100px', maxWidth: '1400px', margin: '0 auto', paddingLeft: '5%', paddingRight: '5%' }}>
@@ -112,9 +174,9 @@ function App() {
               </div>
             </div>
 
-            {/* iOS Bottom Sheet Modal */}
+            {/* iOS Bottom Sheet Modal (only if a pack is selected) */}
             {dexSelectedPack && (
-              <div className="ios-backdrop" onClick={() => setDexSelectedPack(null)}>
+              <div className="ios-backdrop" onClick={() => setDexSelectedPack(null)} data-lenis-prevent="true">
                 <div className="ios-bottom-sheet" onClick={e => e.stopPropagation()}>
                   
                   <div className="sheet-header">
@@ -134,7 +196,7 @@ function App() {
                     </div>
                   </div>
                   
-                  <div className="sheet-content">
+                  <div className="sheet-content" data-lenis-prevent="true">
                     <Calculator mode="perset" selectedPack={dexSelectedPack} isModal={true} />
                   </div>
                   
@@ -144,8 +206,30 @@ function App() {
           </>
         )}
 
+        <div style={{ display: view === 'meta' ? 'block' : 'none' }}>
+          {visitedViews.has('meta') && <MetaDecks />}
+        </div>
+        <div style={{ display: view === 'decks' ? 'block' : 'none' }}>
+          {visitedViews.has('decks') && <DeckBuilder onRequestLogin={() => setShowLoginModal(true)} />}
+        </div>
+        <div style={{ display: view === 'collection' ? 'block' : 'none' }}>
+          {visitedViews.has('collection') && <CollectionTracker />}
+        </div>
+
       </div>
+
+      {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
     </>
+  );
+}
+
+function App() {
+  return (
+    <ReactLenis root options={{ lerp: 0.08, smoothWheel: true }}>
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    </ReactLenis>
   );
 }
 
@@ -318,7 +402,7 @@ function Calculator({ mode, selectedPack, isModal }) {
 
             <div style={{ marginTop: '24px' }}>
               <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1d1d1f', marginBottom: '20px', paddingLeft: isModal ? '20px' : '8px' }}>Luck Distribution</h3>
-              <div className={isModal ? "ios-card" : ""} style={!isModal ? { background: 'rgba(255,255,255,0.7)', borderRadius: 'var(--radius-lg)', padding: '24px' } : { display: 'flex', flexDirection: 'column', padding: '20px', gap: '20px' }}>
+              <div className={isModal ? "ios-card" : ""} style={!isModal ? { background: 'rgba(255,255,255,0.7)', borderRadius: 'var(--radius-lg)', padding: '24px' } : { display: 'flex', flexDirection: 'column', padding: '20px', gap: '20px', alignItems: 'stretch', width: '100%' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   {results.results.map(({ r, got, exp, pct }) => {
                     const percentage = pct * 100;
@@ -346,14 +430,14 @@ function Calculator({ mode, selectedPack, isModal }) {
 
                     return (
                       <div key={r.id} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '6px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <div dangerouslySetInnerHTML={{ __html: r.icon }} style={{ height: '24px', display: 'flex', alignItems: 'center' }} />
                             <span style={{ fontWeight: 800, fontSize: '1.1rem', color: '#1d1d1f' }}>&times;{got}</span>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>Top {(100 - percentage).toFixed(2)}%</span>
-                             <div style={{ background: tagColor, color: tagTextColor, padding: '4px 10px', borderRadius: '16px', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                             <div style={{ background: tagColor, color: tagTextColor, padding: '4px 10px', borderRadius: '16px', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>
                                {tagText}
                              </div>
                           </div>
@@ -370,37 +454,33 @@ function Calculator({ mode, selectedPack, isModal }) {
 
             <div style={{ marginTop: '32px' }}>
               <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1d1d1f', marginBottom: '20px', paddingLeft: isModal ? '20px' : '8px' }}>Average Packs per Card</h3>
-              <div className={isModal ? "ios-card" : ""} style={!isModal ? { background: 'rgba(255,255,255,0.7)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' } : { borderRadius: '20px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.05)', background: '#fff' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right' }}>
+              <div className={isModal ? "ios-card" : ""} style={!isModal ? { background: 'rgba(255,255,255,0.7)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' } : { borderRadius: '20px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.05)', background: '#fff', padding: 0, width: '100%', display: 'block' }}>
+                <div style={{ overflowX: 'auto', width: '100%' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', minWidth: '300px' }}>
                   <thead>
                     <tr style={{ borderBottom: '2px solid rgba(0,0,0,0.05)' }}>
                       <th style={{ padding: '16px 20px', textAlign: 'left', fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-muted)' }}>Rarity</th>
                       <th style={{ padding: '16px 20px', fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: 1.2 }}>Standard<br/><span style={{ fontSize: '0.7rem', fontWeight: 400 }}>Packs/card</span></th>
-                      <th style={{ padding: '16px 20px', fontWeight: 700, fontSize: '0.9rem', color: '#1d1d1f', lineHeight: 1.2 }}>Mine<br/><span style={{ fontSize: '0.7rem', fontWeight: 500 }}>Packs/card</span></th>
                     </tr>
                   </thead>
                   <tbody>
                     {results.results.map(({ r, got, prob }, index) => {
-                      const totalPacksEvaluated = mode === 'overall' ? packsOpened + deluxePacksOpened : packsOpened;
                       const standardPacks = prob > 0 ? (1 / prob).toFixed(1) : '-';
-                      const minePacks = got > 0 ? (totalPacksEvaluated / got).toFixed(1) : '-';
                       
                       return (
                         <tr key={r.id} style={{ borderBottom: index === results.results.length - 1 ? 'none' : '1px solid rgba(0,0,0,0.04)' }}>
                           <td style={{ padding: '16px 20px', textAlign: 'left' }}>
                             <div dangerouslySetInnerHTML={{ __html: r.icon }} style={{ height: '24px', display: 'flex', alignItems: 'center' }} />
                           </td>
-                          <td style={{ padding: '16px 20px', fontWeight: 600, color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums', fontSize: '1.05rem' }}>
-                            {standardPacks}
-                          </td>
                           <td style={{ padding: '16px 20px', fontWeight: 800, color: '#1d1d1f', fontVariantNumeric: 'tabular-nums', fontSize: '1.05rem' }}>
-                            {minePacks}
+                            {standardPacks}
                           </td>
                         </tr>
                       );
                     })}
                   </tbody>
                 </table>
+              </div>
               </div>
             </div>
           </div>

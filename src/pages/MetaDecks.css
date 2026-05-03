@@ -1,0 +1,105 @@
+.meta-decks-page {
+  display: flex;
+  flex-direction: column;
+}
+
+.decks-container {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.tier-badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 800;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: rgba(0, 0, 0, 0.05);
+  display: inline-flex;
+  align-items: center;
+}
+
+.tier-badge.s-tier {
+  color: #d69e00;
+  background-color: rgba(255, 204, 0, 0.15);
+}
+
+.tier-badge.a-tier {
+  color: #24a135;
+  background-color: rgba(50, 215, 75, 0.15);
+}
+
+.deck-type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 8px var(--border-medium);
+}
+
+.deck-cards-carousel {
+  display: flex;
+  gap: 24px;
+  overflow-x: auto;
+  padding: 20px 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.2) transparent;
+}
+
+.deck-cards-carousel::-webkit-scrollbar {
+  height: 8px;
+}
+
+.deck-cards-carousel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.deck-cards-carousel::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.2);
+  border-radius: 10px;
+}
+
+.deck-cards-carousel::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0,0,0,0.4);
+}
+
+
+
+.deck-card-slot {
+  /* removed scroll-snap-align */
+}
+
+/* =========================================
+   COMPREHENSIVE RESPONSIVE OVERRIDES
+   ========================================= */
+
+@media (max-width: 1024px) {
+  .deck-cards-carousel {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 12px 0;
+  }
+  .deck-cards-carousel::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .decks-container {
+    gap: 24px;
+  }
+  .deck-cards-carousel {
+    gap: 12px;
+  }
+  .tier-badge, .deck-type-badge {
+    padding: 4px 10px;
+    font-size: 0.7rem;
+  }
+}

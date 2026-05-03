@@ -1,0 +1,345 @@
+.db-layout {
+  display: flex;
+  gap: 20px;
+  height: calc(100vh - 200px);
+  min-height: 500px;
+  max-height: 800px;
+}
+
+.catalog-pane, .deck-pane {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  overflow: hidden;
+}
+
+.catalog-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.deck-pane {
+  flex: 1;
+  max-width: 600px;
+}
+
+.pane-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background-color: var(--input-bg);
+  border: 1px solid var(--border-medium);
+  border-radius: 20px;
+  padding: 8px 16px;
+  gap: 8px;
+  width: 250px;
+}
+
+.search-box input {
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  outline: none;
+  width: 100%;
+  font-family: inherit;
+}
+
+.search-icon {
+  color: var(--text-muted);
+}
+
+.catalog-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 16px;
+  overflow-y: auto;
+  padding-right: 10px;
+  padding-bottom: 20px;
+}
+
+.catalog-grid .pokemon-card-container,
+.active-deck-grid .pokemon-card-container,
+.preview-card .pokemon-card-container,
+.saved-deck-detail-grid .pokemon-card-container {
+  width: 100%;
+}
+
+.catalog-card-wrapper {
+  position: relative;
+  cursor: pointer;
+}
+
+.add-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(10, 132, 255, 0.6);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 20;
+}
+
+.catalog-card-wrapper:hover .add-overlay {
+  opacity: 1;
+}
+
+.deck-name-input {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--border-medium);
+  color: var(--text-main);
+  font-size: 1.5rem;
+  font-weight: 600;
+  font-family: inherit;
+  outline: none;
+  width: 70%;
+  padding-bottom: 4px;
+}
+
+.deck-name-input:focus {
+  border-color: var(--accent);
+}
+
+.count-badge {
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.count-badge.complete {
+  background-color: #34c759;
+  color: #000;
+}
+
+.deck-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.active-deck-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.deck-slot {
+  aspect-ratio: 63 / 88;
+  border-radius: 8px;
+  position: relative;
+  cursor: pointer;
+}
+
+.empty-slot {
+  width: 100%;
+  height: 100%;
+  border: 2px dashed var(--border-medium);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.remove-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 69, 58, 0.6);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 20;
+}
+
+.deck-slot:hover .remove-overlay {
+  opacity: 1;
+}
+
+/* Legacy media queries removed, replaced at bottom */
+
+/* Saved Decks Styles */
+.saved-decks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 24px;
+}
+
+.saved-deck-card {
+  background: var(--glass-card-bg);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.saved-deck-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px var(--border-medium);
+  background: var(--glass-panel-border);
+}
+
+.deck-card-preview {
+  display: flex;
+  height: 120px;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-card {
+  position: absolute;
+  width: 80px;
+  border-radius: 6px;
+  box-shadow: -4px 0 12px rgba(0,0,0,0.2);
+  transition: transform 0.3s ease;
+}
+
+.saved-deck-card:hover .preview-card {
+  transform: translateY(-8px) scale(1.05) !important;
+}
+
+.deck-card-info h4 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deck-card-info p {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.saved-deck-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 24px;
+}
+
+.card-count-badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: linear-gradient(135deg, #FF3B30 0%, #FF2D55 100%);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 800;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 8px rgba(255, 59, 48, 0.4);
+  border: 2px solid white;
+  z-index: 10;
+}
+
+/* =========================================
+   COMPREHENSIVE RESPONSIVE OVERRIDES
+   ========================================= */
+
+@media (max-width: 1024px) {
+  .db-layout {
+    flex-direction: column;
+    height: auto;
+    min-height: auto;
+    max-height: none;
+  }
+  .catalog-pane, .deck-pane {
+    max-width: 100% !important;
+    overflow: visible; /* Let them scroll naturally */
+    padding: 16px 0;
+  }
+  .catalog-pane {
+    max-height: 500px;
+    overflow-y: auto;
+  }
+  .active-deck-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  .catalog-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .pane-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .search-box {
+    width: 100%;
+  }
+  .active-deck-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  .deck-name-input {
+    width: 100%;
+    font-size: 1.3rem;
+  }
+  .deck-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .deck-actions button {
+    flex: 1;
+    text-align: center;
+  }
+  .saved-decks-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .active-deck-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .catalog-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .saved-deck-detail-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
