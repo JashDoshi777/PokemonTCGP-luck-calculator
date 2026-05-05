@@ -10,7 +10,10 @@ class DataService {
       return this.cache[filename];
     }
     try {
-      const response = await fetch(`${BASE_URL}/${filename}`);
+      // Add a cache buster query parameter so the browser always fetches the latest version
+      // since the CDN might cache 'latest' aggressively.
+      const timestamp = new Date().getTime();
+      const response = await fetch(`${BASE_URL}/${filename}?v=${timestamp}`);
       if (!response.ok) throw new Error(`Failed to fetch ${filename}`);
       const data = await response.json();
       this.cache[filename] = data;
@@ -22,7 +25,7 @@ class DataService {
   }
 
   async getCards() {
-    return this.fetchWithCache('cards.extra.json');
+    return this.fetchWithCache('cards.json');
   }
 
   async getSets() {

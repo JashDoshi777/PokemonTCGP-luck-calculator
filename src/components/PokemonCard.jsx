@@ -13,10 +13,10 @@ const PokemonCard = ({ card, count, isWishlisted, onToggleWishlist }) => {
   if (cardNumberStr.includes('/')) {
     cardNumberStr = cardNumberStr.split('/')[0];
   }
-  cardNumberStr = cardNumberStr.padStart(3, '0');
-
+  // The new flibustier API does not require zero padding
+  
   const setCode = card.set || 'A1';
-  const imgUrl = `https://assets.tcgdex.net/en/tcgp/${setCode}/${cardNumberStr}/high.webp`;
+  const imgUrl = `https://cdn.jsdelivr.net/gh/flibustier/pokemon-tcg-exchange@main/public/images/cards-by-set/${setCode}/${cardNumberStr}.webp`;
 
   return (
     <div className="pokemon-card-container">

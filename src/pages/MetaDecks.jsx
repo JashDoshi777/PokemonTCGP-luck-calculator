@@ -11,12 +11,16 @@ const MetaDecks = () => {
 
   const findFuzzyCard = (cardName) => {
     if (!cards || cards.length === 0) return null;
-    let found = cards.find(c => c.name.toLowerCase() === cardName.toLowerCase());
+    
+    const normalize = (str) => str.toLowerCase().replace(/['’]/g, "'");
+    const normalizedTarget = normalize(cardName);
+    
+    let found = cards.find(c => normalize(c.name) === normalizedTarget);
     if (found) return found;
     
     // Fallback: strip common prefixes/suffixes to find base Pokémon
-    const cleanName = cardName.replace(/Mega | ex| V| VMAX| VSTAR/gi, '').trim();
-    found = cards.find(c => c.name.toLowerCase().includes(cleanName.toLowerCase()));
+    const cleanName = normalizedTarget.replace(/mega | ex| v| vmax| vstar/gi, '').trim();
+    found = cards.find(c => normalize(c.name).includes(cleanName));
     return found;
   };
 
@@ -36,9 +40,8 @@ const MetaDecks = () => {
     if (!foundCard) return null; // If absolutely no matching image can be found
     let cardNumberStr = foundCard.number ? foundCard.number.toString() : '1';
     if (cardNumberStr.includes('/')) cardNumberStr = cardNumberStr.split('/')[0];
-    cardNumberStr = cardNumberStr.padStart(3, '0');
     const setCode = foundCard.set || 'A1';
-    return `https://assets.tcgdex.net/en/tcgp/${setCode}/${cardNumberStr}/high.webp`;
+    return `https://cdn.jsdelivr.net/gh/flibustier/pokemon-tcg-exchange@main/public/images/cards-by-set/${setCode}/${cardNumberStr}.webp`;
   };
 
   const handleDeckClick = (deck) => {
