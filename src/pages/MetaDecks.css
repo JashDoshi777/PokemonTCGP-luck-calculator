@@ -1,105 +1,380 @@
 .meta-decks-page {
-  display: flex;
-  flex-direction: column;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.decks-container {
-  display: flex;
-  flex-direction: column;
-  gap: 40px;
+.meta-logo {
+  width: 120px;
+  border-radius: 28px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
 }
 
-.tier-badge {
-  padding: 6px 14px;
-  border-radius: 20px;
+.meta-title {
+  font-size: min(3rem, 10vw);
   font-weight: 800;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  background-color: rgba(0, 0, 0, 0.05);
-  display: inline-flex;
+  letter-spacing: -0.04em;
+  margin: 0;
+}
+
+.meta-subtitle {
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  margin-top: 12px;
+  font-weight: 500;
+  max-width: 600px;
+}
+
+/* Decks Grid */
+.decks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.deck-grid-item {
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.9); /* Cleaner white frosted glass */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 1);
+}
+
+/* Force hide any rogue pseudo-elements that might cause broken icons */
+.deck-grid-item::before,
+.deck-grid-item::after {
+  display: none !important;
+}
+
+.deck-grid-item:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 1);
+  background: rgba(255, 255, 255, 1);
+}
+
+.deck-item-header {
+  display: flex;
+  gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
-.tier-badge.s-tier {
-  color: #d69e00;
-  background-color: rgba(255, 204, 0, 0.15);
-}
-
-.tier-badge.a-tier {
-  color: #24a135;
-  background-color: rgba(50, 215, 75, 0.15);
-}
-
-.deck-type-badge {
-  display: inline-flex;
-  align-items: center;
+/* Apple Style Pills */
+.ios-pill {
   padding: 6px 14px;
   border-radius: 20px;
-  font-weight: 700;
   font-size: 0.75rem;
-  color: #fff;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  box-shadow: 0 2px 8px var(--border-medium);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.deck-cards-carousel {
+/* Tier Pill Styles - Soft, Premium Apple Colors */
+.tier-pill {
+  background: #f2f2f7; /* iOS System Gray 6 */
+  color: #1d1d1f;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+.tier-pill.s-tier {
+  background: #fff3e0;
+  color: #d97706;
+  box-shadow: inset 0 0 0 1px rgba(217, 119, 6, 0.2);
+}
+
+.tier-pill.s-a-tier {
+  background: #fef2f2;
+  color: #dc2626;
+  box-shadow: inset 0 0 0 1px rgba(220, 38, 38, 0.2);
+}
+
+.tier-pill.a-tier {
+  background: #f0fdf4;
+  color: #16a34a;
+  box-shadow: inset 0 0 0 1px rgba(22, 163, 74, 0.2);
+}
+
+/* Type Pill Styles - Match Pokemon Types */
+.type-pill {
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.type-pill.type-darkness { background: linear-gradient(135deg, #4b5563, #1f2937); }
+.type-pill.type-water { background: linear-gradient(135deg, #60a5fa, #2563eb); }
+.type-pill.type-fire { background: linear-gradient(135deg, #f87171, #dc2626); }
+.type-pill.type-lightning { background: linear-gradient(135deg, #fbbf24, #d97706); }
+.type-pill.type-dragon { background: linear-gradient(135deg, #a78bfa, #7c3aed); }
+.type-pill.type-fighting { background: linear-gradient(135deg, #fb923c, #ea580c); }
+.type-pill.type-metal { background: linear-gradient(135deg, #9ca3af, #4b5563); }
+.type-pill.type-grass { background: linear-gradient(135deg, #4ade80, #16a34a); }
+.type-pill.type-colorless { background: linear-gradient(135deg, #e5e7eb, #9ca3af); color: #1d1d1f; text-shadow: none; }
+
+.deck-title-row {
   display: flex;
-  gap: 24px;
-  overflow-x: auto;
-  padding: 20px 0;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0,0,0,0.2) transparent;
+  align-items: center;
+  gap: 16px;
 }
 
-.deck-cards-carousel::-webkit-scrollbar {
-  height: 8px;
+.deck-main-avatar {
+  width: 48px;
+  height: 66px; /* Card ratio */
+  border-radius: 4px;
+  object-fit: cover;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border: 1px solid rgba(0,0,0,0.05);
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
 }
 
-.deck-cards-carousel::-webkit-scrollbar-track {
+.deck-grid-item:hover .deck-main-avatar {
+  transform: scale(1.05) rotate(-3deg);
+}
+
+.deck-item-name {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.deck-item-desc {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0;
+  flex-grow: 1;
+}
+
+.deck-item-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.deck-card-count {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: rgba(0, 0, 0, 0.04);
+  padding: 6px 12px;
+  border-radius: 12px;
+}
+
+.view-details-text {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--primary);
+  opacity: 0.7;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.deck-grid-item:hover .view-details-text {
+  opacity: 1;
+  transform: translateX(4px);
+}
+
+/* Modal Overlay & Scroll Container */
+.deck-modal-scroll-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(240, 240, 245, 0.6); /* Very light iOS overlay */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* Align top for scrolling */
+  padding: 60px 20px;
+  overflow-y: auto; /* Scroll the entire container, not just the modal interior */
+}
+
+/* Custom scrollbar for modal overlay */
+.deck-modal-scroll-container::-webkit-scrollbar {
+  width: 8px;
+}
+.deck-modal-scroll-container::-webkit-scrollbar-track {
   background: transparent;
 }
-
-.deck-cards-carousel::-webkit-scrollbar-thumb {
-  background-color: rgba(0,0,0,0.2);
+.deck-modal-scroll-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.15);
   border-radius: 10px;
 }
 
-.deck-cards-carousel::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0,0,0,0.4);
+.deck-modal-content {
+  width: 100%;
+  max-width: 800px; /* Reduced width for a more elegant Apple-like popup */
+  position: relative;
+  padding: 48px;
+  border-radius: 36px;
+  background: #ffffff; /* Clean solid white to prevent any transparency issues */
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  margin-bottom: 60px; /* Space at bottom while scrolling */
 }
 
-
-
-.deck-card-slot {
-  /* removed scroll-snap-align */
+.deck-modal-close {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: #f2f2f7;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8e8e93;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  z-index: 10;
 }
 
-/* =========================================
-   COMPREHENSIVE RESPONSIVE OVERRIDES
-   ========================================= */
+.deck-modal-close:hover {
+  background: #e5e5ea;
+  color: #1d1d1f;
+  transform: scale(1.1);
+}
 
-@media (max-width: 1024px) {
-  .deck-cards-carousel {
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding: 12px 0;
+.deck-modal-header {
+  margin-bottom: 32px;
+  padding-right: 48px; /* Space for close button */
+}
+
+.deck-modal-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0 0 12px 0;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.deck-modal-desc {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.deck-modal-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); /* Smaller cards in modal */
+  gap: 20px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.deck-modal-card-wrapper {
+  display: flex;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.deck-modal-card-wrapper:hover {
+  transform: translateY(-4px) scale(1.02);
+}
+
+.deck-modal-card-wrapper > div {
+  width: 100%;
+  max-width: 160px;
+}
+
+/* Animations */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
   }
-  .deck-cards-carousel::-webkit-scrollbar {
-    display: none;
+  to { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
+/* Responsive Adjustments */
 @media (max-width: 768px) {
-  .decks-container {
-    gap: 24px;
+  .meta-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 20px;
+    padding: 30px 20px !important;
   }
-  .deck-cards-carousel {
-    gap: 12px;
+
+  .meta-logo {
+    width: 90px;
   }
-  .tier-badge, .deck-type-badge {
-    padding: 4px 10px;
-    font-size: 0.7rem;
+
+  .decks-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .deck-modal-scroll-container {
+    padding: 0;
+    align-items: flex-end; /* Bottom sheet style on mobile */
+  }
+
+  .deck-modal-content {
+    border-radius: 36px 36px 0 0;
+    padding: 32px 24px;
+    padding-bottom: env(safe-area-inset-bottom, 32px);
+    margin-bottom: 0;
+  }
+
+  .deck-modal-title {
+    font-size: 1.8rem;
+  }
+  
+  .deck-modal-header {
+    margin-bottom: 24px;
+    padding-right: 40px;
+  }
+
+  .deck-modal-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 16px;
+  }
+  
+  .deck-modal-close {
+    top: 24px;
+    right: 24px;
   }
 }

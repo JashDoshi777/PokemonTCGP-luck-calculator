@@ -172,6 +172,23 @@ export const AppProvider = ({ children }) => {
     });
   };
 
+  const batchUpdateCollection = (cardIds, delta) => {
+    setCollection(prev => {
+      const next = { ...prev };
+      cardIds.forEach(cardId => {
+        const current = next[cardId] || 0;
+        const newCount = Math.max(0, current + delta);
+        if (newCount > 0) {
+          next[cardId] = newCount;
+        } else {
+          delete next[cardId];
+        }
+      });
+      localStorage.setItem('tcgp_collection', JSON.stringify(next));
+      return next;
+    });
+  };
+
   const toggleCardOwnership = (cardId, owned) => {
     setCollection(prev => {
       const next = { ...prev };
@@ -237,6 +254,7 @@ export const AppProvider = ({ children }) => {
       wishlist,
       toggleCardOwnership,
       updateCardCount,
+      batchUpdateCollection,
       toggleWishlist,
       customDecks,
       saveDeck,

@@ -78,7 +78,7 @@ const AppleSearchBar = ({ onSelectCard, placeholder = "Search Pokémon..." }) =>
       </div>
 
       {isActive && query && (
-        <div className="apple-search-dropdown">
+        <div className="apple-search-dropdown" data-lenis-prevent="true">
           {results.length > 0 ? (
             results.map((card) => (
               <div 

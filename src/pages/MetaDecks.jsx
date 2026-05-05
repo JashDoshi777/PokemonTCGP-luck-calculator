@@ -1,32 +1,64 @@
-import React, { useRef } from 'react';
+import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { META_DECKS } from '../data/metaDecks';
 import PokemonCard from '../components/PokemonCard';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { X } from 'lucide-react';
 import './MetaDecks.css';
 
 const MetaDecks = () => {
   const { cards, loading } = useAppContext();
+  const [selectedDeck, setSelectedDeck] = useState(null);
+
+  const findFuzzyCard = (cardName) => {
+    if (!cards || cards.length === 0) return null;
+    let found = cards.find(c => c.name.toLowerCase() === cardName.toLowerCase());
+    if (found) return found;
+    
+    // Fallback: strip common prefixes/suffixes to find base Pokémon
+    const cleanName = cardName.replace(/Mega | ex| V| VMAX| VSTAR/gi, '').trim();
+    found = cards.find(c => c.name.toLowerCase().includes(cleanName.toLowerCase()));
+    return found;
+  };
 
   const resolveDeckCards = (deckCards) => {
     if (!cards || cards.length === 0) return [];
     return deckCards.map(dc => {
-      const foundCard = cards.find(c => c.name.toLowerCase() === dc.name.toLowerCase());
+      const foundCard = findFuzzyCard(dc.name);
       return {
-        card: foundCard || { name: dc.name, number: '1', set: 'A1' },
+        card: foundCard || { name: dc.name, number: '999', set: 'CUSTOM' },
         count: dc.count
       };
     });
   };
 
+  const getCardImage = (cardName) => {
+    const foundCard = findFuzzyCard(cardName);
+    if (!foundCard) return null; // If absolutely no matching image can be found
+    let cardNumberStr = foundCard.number ? foundCard.number.toString() : '1';
+    if (cardNumberStr.includes('/')) cardNumberStr = cardNumberStr.split('/')[0];
+    cardNumberStr = cardNumberStr.padStart(3, '0');
+    const setCode = foundCard.set || 'A1';
+    return `https://assets.tcgdex.net/en/tcgp/${setCode}/${cardNumberStr}/high.webp`;
+  };
+
+  const handleDeckClick = (deck) => {
+    setSelectedDeck(deck);
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+  };
+
+  const closeModal = () => {
+    setSelectedDeck(null);
+    document.body.style.overflow = 'unset';
+  };
+
   return (
     <div className="meta-decks-page animate-enter">
-      <div className="glass-panel" style={{ display: 'flex', gap: '40px', alignItems: 'center', marginBottom: '60px', flexWrap: 'wrap' }}>
-        <img src="/images/pocket_logo.webp" alt="Meta Decks" style={{ width: '120px', borderRadius: '28px', boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }} />
+      <div className="glass-panel meta-header" style={{ display: 'flex', gap: '30px', alignItems: 'center', marginBottom: '40px', flexWrap: 'wrap' }}>
+        <img src="/images/pocket_logo.webp" alt="Meta Decks" className="meta-logo" />
         <div>
-          <h2 style={{ fontSize: 'min(3rem, 10vw)', fontWeight: 800, letterSpacing: '-0.04em' }} className="text-gradient">Meta Decks</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '1.2rem', marginTop: '12px', fontWeight: 500, maxWidth: '600px' }}>
-            Explore the top-performing S-Tier and A-Tier decks in the current meta.
+          <h2 className="text-gradient meta-title">Meta Decks</h2>
+          <p className="meta-subtitle">
+            Explore the top-performing decks in the current meta. Click on a deck to view its full card list.
           </p>
         </div>
       </div>
@@ -34,58 +66,60 @@ const MetaDecks = () => {
       {loading ? (
         <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>Loading database...</div>
       ) : (
-        <div className="decks-container">
-          {META_DECKS.map((deck) => (
-            <DeckItem key={deck.id} deck={deck} resolveDeckCards={resolveDeckCards} />
-          ))}
+        <div className="decks-grid">
+          {META_DECKS.map((deck) => {
+            const mainImgUrl = getCardImage(deck.cards[0].name);
+            return (
+              <div key={deck.id} className="deck-grid-item" onClick={() => handleDeckClick(deck)}>
+                <div className="deck-item-header">
+                  <span className={`ios-pill tier-pill ${deck.tier.toLowerCase().replace('/', '-')}`}>{deck.tier}</span>
+                  <span className={`ios-pill type-pill type-${deck.type.toLowerCase()}`}>{deck.type}</span>
+                </div>
+                <div className="deck-title-row">
+                  {mainImgUrl && (
+                    <img src={mainImgUrl} alt={deck.name} className="deck-main-avatar" loading="lazy" />
+                  )}
+                  <div>
+                    <h3 className="deck-item-name">{deck.name}</h3>
+                  </div>
+                </div>
+                <p className="deck-item-desc">{deck.description}</p>
+                <div className="deck-item-footer">
+                  <span className="deck-card-count">{deck.cards.reduce((acc, c) => acc + c.count, 0)} Cards</span>
+                  <span className="view-details-text">View Deck →</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
-    </div>
-  );
-};
 
-const DeckItem = ({ deck, resolveDeckCards }) => {
-  const carouselRef = useRef(null);
-  
-  const scroll = (direction) => {
-    if (carouselRef.current) {
-      const scrollAmount = window.innerWidth > 768 ? 400 : 250;
-      carouselRef.current.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
-    }
-  };
+      {selectedDeck && (
+        <div className="deck-modal-scroll-container animate-fade-in" onClick={closeModal}>
+          <div className="deck-modal-content animate-slide-up" onClick={e => e.stopPropagation()}>
+            <button className="deck-modal-close" onClick={closeModal}>
+              <X size={24} />
+            </button>
+            
+            <div className="deck-modal-header">
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '16px' }}>
+                <span className={`ios-pill tier-pill ${selectedDeck.tier.toLowerCase().replace('/', '-')}`}>{selectedDeck.tier}</span>
+                <span className={`ios-pill type-pill type-${selectedDeck.type.toLowerCase()}`}>{selectedDeck.type}</span>
+              </div>
+              <h2 className="deck-modal-title">{selectedDeck.name}</h2>
+              <p className="deck-modal-desc">{selectedDeck.description}</p>
+            </div>
 
-  const resolvedCards = resolveDeckCards(deck.cards);
-
-  return (
-    <div className="glass-card" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      <div className="deck-info">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px', flexWrap: 'wrap' }}>
-          <h3 style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--text-main)', margin: 0 }}>{deck.name}</h3>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <span className={`tier-badge ${deck.tier.toLowerCase()}`}>{deck.tier}</span>
-            <div className="deck-type-badge" style={{ backgroundColor: `var(--color-${deck.type.toLowerCase()})` }}>
-              {deck.type}
+            <div className="deck-modal-cards-grid">
+              {resolveDeckCards(selectedDeck.cards).map((rc, idx) => (
+                <div className="deck-modal-card-wrapper" key={idx}>
+                  <PokemonCard card={rc.card} count={rc.count} />
+                </div>
+              ))}
             </div>
           </div>
         </div>
-        <p style={{ color: 'var(--text-muted)', fontSize: '1rem', lineHeight: 1.5, margin: 0 }}>{deck.description}</p>
-      </div>
-      
-      <div className="carousel-wrapper" style={{ position: 'relative', padding: '0 50px' }}>
-        <button className="apple-carousel-nav left" onClick={() => scroll('left')}>
-          <ChevronLeft size={24} />
-        </button>
-        
-        <div className="deck-cards-carousel" ref={carouselRef}>
-          {resolvedCards.map((rc, idx) => (
-            <PokemonCard key={idx} card={rc.card} count={rc.count} />
-          ))}
-        </div>
-
-        <button className="apple-carousel-nav right" onClick={() => scroll('right')}>
-          <ChevronRight size={24} />
-        </button>
-      </div>
+      )}
     </div>
   );
 };
