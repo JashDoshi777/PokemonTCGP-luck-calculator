@@ -36,7 +36,7 @@ const CollectionTracker = () => {
     const realSets = Object.values(sets)
       .filter(s => setsWithCards.has(s.code))
       .sort((a, b) => new Date(a.releaseDate) - new Date(b.releaseDate));
-      
+
     return [
       { code: 'WISHLIST', name: { en: 'My Wishlist' } },
       ...realSets
@@ -104,9 +104,9 @@ const CollectionTracker = () => {
     if (r === 'SSR') return <img src="/icons/s2.webp" alt="SSR" style={{ height: '18px', objectFit: 'contain' }} />;
     if (r === 'S') return <img src="/icons/s1.webp" alt="S" style={{ height: '18px', objectFit: 'contain' }} />;
     if (r === 'RR') return <img src="/icons/4d.webp" alt="RR" style={{ height: '18px', objectFit: 'contain' }} />;
-    if (r === 'R') return <div style={{display:'flex', gap:'2px', alignItems:'center'}}>{[...Array(3)].map((_,i) => <img key={i} src="/icons/diamond.png" style={{height:'14px'}}/>)}</div>;
-    if (r === 'U') return <div style={{display:'flex', gap:'2px', alignItems:'center'}}>{[...Array(2)].map((_,i) => <img key={i} src="/icons/diamond.png" style={{height:'14px'}}/>)}</div>;
-    if (r === 'C') return <img src="/icons/diamond.png" style={{height:'14px'}}/>;
+    if (r === 'R') return <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>{[...Array(3)].map((_, i) => <img key={i} src="/icons/diamond.png" style={{ height: '14px' }} />)}</div>;
+    if (r === 'U') return <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>{[...Array(2)].map((_, i) => <img key={i} src="/icons/diamond.png" style={{ height: '14px' }} />)}</div>;
+    if (r === 'C') return <img src="/icons/diamond.png" style={{ height: '14px' }} />;
     return r;
   };
 
@@ -139,7 +139,7 @@ const CollectionTracker = () => {
     updateCardCount(`${card.set}-${card.number}`, 1);
     setActiveSet(card.set);
     setRarityFilter('All');
-    
+
     // Auto-scroll to the card after state updates and DOM renders
     setTimeout(() => {
       const el = document.getElementById(`card-${card.set}-${card.number}`);
@@ -169,8 +169,8 @@ const CollectionTracker = () => {
       </div>
 
       <div style={{ marginBottom: '30px' }}>
-        <AppleSearchBar 
-          placeholder="Search any card to add to collection..." 
+        <AppleSearchBar
+          placeholder="Search any card to add to collection..."
           onSelectCard={handleSearchSelect}
         />
       </div>
@@ -184,8 +184,8 @@ const CollectionTracker = () => {
             </button>
             <div className="set-buttons" ref={scrollRef} style={{ scrollBehavior: 'smooth' }}>
               {availableSets.map(set => (
-                <button 
-                  key={set.code} 
+                <button
+                  key={set.code}
                   className={`set-btn ${activeSet === set.code ? 'active' : ''}`}
                   onClick={() => {
                     setActiveSet(set.code);
@@ -200,7 +200,7 @@ const CollectionTracker = () => {
               <ChevronRight size={20} />
             </button>
           </div>
-          
+
           <div style={{ display: 'flex', justifyItems: 'center', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginTop: '20px' }}>
             {uniqueRarities.length > 1 && (
               <div className="rarity-filters" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
@@ -208,7 +208,7 @@ const CollectionTracker = () => {
                   <Filter size={16} /> Rarity:
                 </div>
                 {uniqueRarities.map(r => (
-                  <button 
+                  <button
                     key={r}
                     className={`rarity-btn ${rarityFilter === r ? 'active' : ''}`}
                     onClick={() => setRarityFilter(r)}
@@ -218,7 +218,7 @@ const CollectionTracker = () => {
                 ))}
               </div>
             )}
-            
+
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
               <div className="apple-segmented-control">
                 {['All', 'Owned', 'Missing'].map(f => (
@@ -231,8 +231,8 @@ const CollectionTracker = () => {
                   </button>
                 ))}
               </div>
-              <button 
-                className={`select-all-btn ${allVisibleOwned ? 'active' : ''}`} 
+              <button
+                className={`select-all-btn ${allVisibleOwned ? 'active' : ''}`}
                 onClick={handleSelectAll}
                 title={allVisibleOwned ? "Deselect all visible cards" : "Select all visible cards"}
               >
@@ -241,7 +241,7 @@ const CollectionTracker = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="progress-section">
           <h3 style={{ fontSize: '1rem', marginBottom: '8px' }}>{activeSet === 'WISHLIST' ? 'Wishlist Progress' : 'Set Completion'}</h3>
           <div className="progress-bar-container">
@@ -251,7 +251,7 @@ const CollectionTracker = () => {
         </div>
       </div>
 
-      <div 
+      <div
         className="collection-grid"
         onMouseLeave={() => setIsDragging(false)}
       >
@@ -265,7 +265,7 @@ const CollectionTracker = () => {
             const count = collection[cardId] || 0;
             const isOwned = count > 0;
             return (
-              <div 
+              <div
                 key={cardId}
                 id={`card-${cardId}`}
                 className={`collection-card-wrapper ${isOwned ? 'owned' : 'missing'}`}
@@ -297,8 +297,8 @@ const CollectionTracker = () => {
                           // Note: this might trigger multiple times per card during swipe if not debounced, 
                           // but updateCardCount handles it gracefully. 
                           // Let's add a dataset marker to prevent infinite rapid incrementing on the same swipe.
-                          if (wrapper.dataset.lastSwiped !== Date.now().toString().slice(0,-3)) {
-                            wrapper.dataset.lastSwiped = Date.now().toString().slice(0,-3);
+                          if (wrapper.dataset.lastSwiped !== Date.now().toString().slice(0, -3)) {
+                            wrapper.dataset.lastSwiped = Date.now().toString().slice(0, -3);
                             updateCardCount(`${set}-${num}`, 1);
                           }
                         }
@@ -311,15 +311,15 @@ const CollectionTracker = () => {
                   // But if we want to ensure click works on mobile without dragging, we can leave this
                 }}
               >
-                <PokemonCard 
-                  card={card} 
-                  count={count > 1 ? count : undefined} 
+                <PokemonCard
+                  card={card}
+                  count={count > 1 ? count : undefined}
                   isWishlisted={wishlist[cardId]}
                   onToggleWishlist={() => toggleWishlist(cardId)}
                 />
                 {!isOwned && <div className="missing-overlay">Missing</div>}
                 {isOwned && (
-                  <button 
+                  <button
                     className="decrement-btn"
                     onMouseDown={(e) => e.stopPropagation()} // Prevent drag start when clicking decrement
                     onTouchStart={(e) => e.stopPropagation()}
