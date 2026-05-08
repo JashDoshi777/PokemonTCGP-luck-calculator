@@ -1389,18 +1389,18 @@ body.dark-mode .nav-pill:hover:not(.active) {
 }
 
 body.dark-mode .stepper-ultra {
-  background: rgba(44, 44, 46, 0.7);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(44, 44, 46, 0.7) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
 }
 
 body.dark-mode .stepper-btn {
-  background: #3a3a3c;
-  color: #f5f5f7;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  background: #3a3a3c !important;
+  color: #f5f5f7 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
 }
 
 body.dark-mode .stepper-btn:hover {
-  background: #48484a;
+  background: #48484a !important;
 }
 
 body.dark-mode .ios-bottom-sheet {
@@ -1552,20 +1552,35 @@ body.dark-mode .card-count-badge {
 }
 
 /* Login Modal Overrides */
-body.dark-mode .login-modal-panel {
+body.dark-mode .login-modal-container {
   background: #1c1c1e !important;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05) !important;
 }
-body.dark-mode .login-input-wrapper {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+body.dark-mode .apple-input {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #f5f5f7 !important;
 }
-body.dark-mode .login-input-wrapper.focused {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: #fff;
+body.dark-mode .apple-input:focus {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: #fff !important;
 }
-body.dark-mode .login-input {
-  color: #f5f5f7;
+body.dark-mode .login-modal-header h2 {
+  color: #f5f5f7 !important;
+}
+body.dark-mode .login-modal-header p {
+  color: #86868b !important;
+}
+body.dark-mode .login-modal-toggle {
+  color: #86868b !important;
+}
+body.dark-mode .login-modal-close {
+  background: rgba(255,255,255,0.1) !important;
+  color: #f5f5f7 !important;
+}
+body.dark-mode .password-toggle-btn {
+  color: #86868b !important;
 }
 
 /* Mobile Menu Dark Mode Overrides */
@@ -1589,4 +1604,43 @@ body.dark-mode .mobile-sidebar-backdrop {
 body.dark-mode .btn-super {
   background: rgba(255, 255, 255, 0.15) !important;
   color: #ffffff !important;
+}
+
+/* Final CTA Section Styles */
+.final-cta {
+  background: #000000;
+  color: #ffffff;
+}
+
+.final-cta h2 {
+  color: #ffffff;
+}
+
+.final-cta .cta-subtitle {
+  color: #86868b;
+}
+
+/* Final CTA Dark Mode Overrides */
+body.dark-mode .final-cta {
+  background: #ffffff;
+  color: #000000;
+}
+
+body.dark-mode .final-cta h2 {
+  color: #000000 !important;
+}
+
+body.dark-mode .final-cta .cta-subtitle {
+  color: #86868b !important;
+}
+
+/* Ensure CTA button remains legible inside the white box during dark mode */
+body.dark-mode .final-cta .cta-btn {
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+/* Calculator iOS Card Shadow in Dark Mode */
+body.dark-mode .ios-card {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
 }

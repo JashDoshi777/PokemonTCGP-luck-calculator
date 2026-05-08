@@ -673,12 +673,12 @@ function LandingPage({ setView }) {
 
       {/* Final CTA */}
       <section style={{ padding: '150px 5%' }}>
-        <div className="final-cta" style={{ maxWidth: '1400px', margin: '0 auto', textAlign: 'center', padding: '120px 20px', background: '#000', borderRadius: '60px', color: '#fff' }}>
-          <h2 className="hero-large" style={{ color: '#fff', marginBottom: '24px' }}>Ready to test your luck?</h2>
-          <p className="section-subtitle" style={{ color: '#86868b', maxWidth: '600px', margin: '0 auto 40px' }}>
+        <div className="final-cta" style={{ maxWidth: '1400px', margin: '0 auto', textAlign: 'center', padding: '120px 20px', borderRadius: '60px' }}>
+          <h2 className="hero-large" style={{ marginBottom: '24px' }}>Ready to test your luck?</h2>
+          <p className="section-subtitle cta-subtitle" style={{ maxWidth: '600px', margin: '0 auto 40px' }}>
             Join thousands of trainers tracking their true luck reality today.
           </p>
-          <button className="btn-super" onClick={() => { setView('calc'); window.scrollTo(0,0); }} style={{ transform: 'scale(1.2)' }}>
+          <button className="btn-super cta-btn" onClick={() => { setView('calc'); window.scrollTo(0,0); }} style={{ transform: 'scale(1.2)' }}>
             Launch the Rotom Dex
           </button>
         </div>
