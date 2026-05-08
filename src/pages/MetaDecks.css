@@ -378,3 +378,55 @@
     right: 24px;
   }
 }
+
+/* Dark Mode Overrides */
+body.dark-mode .deck-grid-item {
+  background: rgba(28, 28, 30, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .deck-grid-item:hover {
+  background: rgba(28, 28, 30, 0.7);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .deck-modal-content {
+  background: #1c1c1e;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .deck-modal-close {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .deck-modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+body.dark-mode .deck-card-count {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .deck-modal-scroll-container {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+body.dark-mode .tier-pill {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f5f5f7;
+}
+
+body.dark-mode .tier-pill.s-tier {
+  background: rgba(217, 119, 6, 0.2);
+  color: #fbbf24;
+}
+
+body.dark-mode .tier-pill.s-a-tier {
+  background: rgba(220, 38, 38, 0.2);
+  color: #f87171;
+}
+
+body.dark-mode .tier-pill.a-tier {
+  background: rgba(22, 163, 74, 0.2);
+  color: #4ade80;
+}

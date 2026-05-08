@@ -19,6 +19,9 @@ function AppContent() {
   const { user, logout } = useAppContext();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('pokemontcgp-theme') || 'light';
+  });
   const [view, setView] = useState(() => {
     return sessionStorage.getItem('pokemontcgp-view') || 'home';
   });
@@ -35,6 +38,15 @@ function AppContent() {
     sessionStorage.setItem('pokemontcgp-view', view);
     sessionStorage.setItem('pokemontcgp-history', JSON.stringify(history));
   }, [view, history]);
+
+  useEffect(() => {
+    localStorage.setItem('pokemontcgp-theme', theme);
+    if (theme === 'dark') {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+  }, [theme]);
 
   useEffect(() => {
     if (dexSelectedPack || showLoginModal) {
@@ -77,6 +89,14 @@ function AppContent() {
         <div className="ambient-blob blob-2"></div>
         <div className="ambient-blob blob-3"></div>
       </div>
+
+      <button className="theme-toggle-btn" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label="Toggle Dark Mode">
+        {theme === 'dark' ? (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        ) : (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        )}
+      </button>
 
       {(history.length > 0 || dexSelectedPack) && (
         <button onClick={handleBack} className="ios-back-btn">
@@ -166,7 +186,7 @@ function AppContent() {
                         <div style={{ color: 'var(--text-muted)', fontSize: '1rem', fontWeight: 500 }}>Released: {p.date}</div>
                       </div>
                     </div>
-                    <button className="btn-super" style={{ width: '100%', padding: '14px', fontSize: '1rem', background: 'var(--text-main)', color: '#fff', boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }} onClick={() => setDexSelectedPack(p)}>
+                    <button className="btn-super" style={{ width: '100%', padding: '14px', fontSize: '1rem', background: 'var(--text-main)', color: 'var(--btn-text, #fff)', boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }} onClick={() => setDexSelectedPack(p)}>
                       Open & Calculate
                     </button>
                   </div>
@@ -401,8 +421,8 @@ function Calculator({ mode, selectedPack, isModal }) {
             </div>
 
             <div style={{ marginTop: '24px' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1d1d1f', marginBottom: '20px', paddingLeft: isModal ? '20px' : '8px' }}>Luck Distribution</h3>
-              <div className={isModal ? "ios-card" : ""} style={!isModal ? { background: 'rgba(255,255,255,0.7)', borderRadius: 'var(--radius-lg)', padding: '24px' } : { display: 'flex', flexDirection: 'column', padding: '20px', gap: '20px', alignItems: 'stretch', width: '100%' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '20px', paddingLeft: isModal ? '20px' : '8px' }}>Luck Distribution</h3>
+              <div className={isModal ? "ios-card" : "data-card"} style={!isModal ? { background: 'var(--card-bg, rgba(255,255,255,0.7))', borderRadius: 'var(--radius-lg)', padding: '24px' } : { display: 'flex', flexDirection: 'column', padding: '20px', gap: '20px', alignItems: 'stretch', width: '100%' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   {results.results.map(({ r, got, exp, pct }) => {
                     const percentage = pct * 100;
@@ -433,7 +453,7 @@ function Calculator({ mode, selectedPack, isModal }) {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '6px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <div dangerouslySetInnerHTML={{ __html: r.icon }} style={{ height: '24px', display: 'flex', alignItems: 'center' }} />
-                            <span style={{ fontWeight: 800, fontSize: '1.1rem', color: '#1d1d1f' }}>&times;{got}</span>
+                            <span style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--text-main)' }}>&times;{got}</span>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>Top {(100 - percentage).toFixed(2)}%</span>
@@ -453,12 +473,12 @@ function Calculator({ mode, selectedPack, isModal }) {
             </div>
 
             <div style={{ marginTop: '32px' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1d1d1f', marginBottom: '20px', paddingLeft: isModal ? '20px' : '8px' }}>Average Packs per Card</h3>
-              <div className={isModal ? "ios-card" : ""} style={!isModal ? { background: 'rgba(255,255,255,0.7)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' } : { borderRadius: '20px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.05)', background: '#fff', padding: 0, width: '100%', display: 'block' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '20px', paddingLeft: isModal ? '20px' : '8px' }}>Average Packs per Card</h3>
+              <div className={isModal ? "ios-card" : "data-card"} style={!isModal ? { background: 'var(--card-bg, rgba(255,255,255,0.7))', borderRadius: 'var(--radius-lg)', overflow: 'hidden' } : { borderRadius: '20px', overflow: 'hidden', border: 'var(--card-border, 1px solid rgba(0,0,0,0.05))', background: 'var(--card-bg, #fff)', padding: 0, width: '100%', display: 'block' }}>
                 <div style={{ overflowX: 'auto', width: '100%' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', minWidth: '300px' }}>
                   <thead>
-                    <tr style={{ borderBottom: '2px solid rgba(0,0,0,0.05)' }}>
+                    <tr style={{ borderBottom: 'var(--card-border, 2px solid rgba(0,0,0,0.05))' }}>
                       <th style={{ padding: '16px 20px', textAlign: 'left', fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-muted)' }}>Rarity</th>
                       <th style={{ padding: '16px 20px', fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: 1.2 }}>Standard<br/><span style={{ fontSize: '0.7rem', fontWeight: 400 }}>Packs/card</span></th>
                     </tr>
@@ -472,7 +492,7 @@ function Calculator({ mode, selectedPack, isModal }) {
                           <td style={{ padding: '16px 20px', textAlign: 'left' }}>
                             <div dangerouslySetInnerHTML={{ __html: r.icon }} style={{ height: '24px', display: 'flex', alignItems: 'center' }} />
                           </td>
-                          <td style={{ padding: '16px 20px', fontWeight: 800, color: '#1d1d1f', fontVariantNumeric: 'tabular-nums', fontSize: '1.05rem' }}>
+                          <td style={{ padding: '16px 20px', fontWeight: 800, color: 'var(--text-main)', fontVariantNumeric: 'tabular-nums', fontSize: '1.05rem' }}>
                             {standardPacks}
                           </td>
                         </tr>
@@ -567,7 +587,7 @@ function LandingPage({ setView }) {
       
       {/* Hero Section */}
       <section style={{ textAlign: 'center', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingTop: '80px', paddingBottom: '80px', position: 'relative' }} className="hero-text">
-        <div style={{ position: 'absolute', top: '15%', left: '50%', transform: 'translateX(-50%)', zIndex: -1, opacity: 0.8, filter: 'blur(30px)' }}>
+        <div className="hero-glow" style={{ position: 'absolute', top: '15%', left: '50%', transform: 'translateX(-50%)', zIndex: -1, opacity: 0.8, filter: 'blur(30px)' }}>
           <img src="/images/glass_pokeball.png" alt="Pokeball Glow" style={{ width: '400px' }} />
         </div>
         <img src="/images/pocket_logo.webp" alt="Pokemon TCG Pocket" className="floating-card" style={{ width: '120px', height: '120px', objectFit: 'cover', marginBottom: '32px', zIndex: 1, borderRadius: '28px', boxShadow: '0 20px 50px rgba(0,0,0,0.2)' }} />
@@ -622,7 +642,7 @@ function LandingPage({ setView }) {
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           
           <div style={{ textAlign: 'center', marginBottom: '80px' }}>
-            <h2 className="hero-large" style={{ color: '#1d1d1f', marginBottom: '16px' }}>Calculate.</h2>
+            <h2 className="hero-large" style={{ color: 'var(--text-main)', marginBottom: '16px' }}>Calculate.</h2>
             <h2 className="hero-large" style={{ color: 'var(--accent)', marginBottom: '24px' }}>Evaluate Luck.</h2>
             <p className="section-subtitle" style={{ maxWidth: '600px', margin: '0 auto' }}>No more guessing. No more myths. Decode the exact mathematical luck of your Pokémon TCG Pocket pulls.</p>
           </div>
@@ -631,13 +651,13 @@ function LandingPage({ setView }) {
             
             <div className="simple-reveal-card" style={{ background: '#fff', borderRadius: '40px', padding: '60px', boxShadow: '0 20px 60px rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
               <div style={{ fontSize: '5rem', fontWeight: 800, marginBottom: '16px', background: 'linear-gradient(135deg, #1d1d1f, #888)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>Pure</div>
-              <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1d1d1f', marginBottom: '16px' }}>Math Engine</h3>
+              <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '16px' }}>Math Engine</h3>
               <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.5 }}>Calculates your exact luck using standard deviations and Poisson distribution.</p>
             </div>
 
             <div className="simple-reveal-card" style={{ background: '#fff', borderRadius: '40px', padding: '60px', boxShadow: '0 20px 60px rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
               <div style={{ fontSize: '5rem', fontWeight: 800, marginBottom: '16px', background: 'linear-gradient(135deg, #1d1d1f, #888)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>All</div>
-              <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1d1d1f', marginBottom: '16px' }}>Pack Sets</h3>
+              <h3 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '16px' }}>Pack Sets</h3>
               <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.5 }}>Supports overall blended calculations or specific pack probabilities.</p>
             </div>
 

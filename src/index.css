@@ -44,7 +44,19 @@ body, html {
   background-color: transparent;
   color: var(--text-main);
   scroll-behavior: smooth;
-  overflow-x: hidden; /* Prevent horizontal scroll blowout */
+  overflow-x: clip; /* Prevent horizontal scroll blowout, but use clip so Lenis works properly */
+}
+
+/* Ensure native smooth scrolling for all internal overflow containers */
+[data-lenis-prevent="true"],
+[style*="overflow-y: auto"],
+[style*="overflow-y: scroll"],
+.catalog-grid,
+.active-deck-grid,
+.deck-modal-scroll-container,
+.apple-search-dropdown,
+.collection-grid {
+  -webkit-overflow-scrolling: touch;
 }
 
 /* CRAZY BACKGROUND: Moving Gradients (macOS Sonoma style) */
@@ -1271,6 +1283,310 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
   /* Landing page empty state text size */
   .empty-state {
     padding: 40px 16px;
-    font-size: 0.9rem;
   }
+}
+
+/* Theme Toggle Button */
+.theme-toggle-btn {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(240, 240, 245, 0.65);
+  backdrop-filter: blur(50px) saturate(250%);
+  -webkit-backdrop-filter: blur(50px) saturate(250%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  z-index: 2000;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,0.8);
+  color: var(--text-main);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.theme-toggle-btn:hover {
+  transform: scale(1.05);
+}
+
+.theme-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+  .theme-toggle-btn {
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* Dark Mode Overrides */
+body.dark-mode {
+  --text-main: #f5f5f7;
+  --text-muted: #98989d;
+  background-color: #000000;
+  --card-bg: rgba(28, 28, 30, 0.5);
+  --card-border: 1px solid rgba(255,255,255,0.1);
+  --btn-text: #000000;
+}
+
+body.dark-mode .ambient-background {
+  background: #000000;
+}
+
+body.dark-mode .ambient-blob {
+  opacity: 0.3;
+}
+
+body.dark-mode .text-gradient {
+  background: linear-gradient(135deg, #ffffff 0%, #a1a1a6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+body.dark-mode .glass-panel {
+  background: rgba(28, 28, 30, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+body.dark-mode .glass-panel::before {
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0) 100%);
+}
+
+body.dark-mode .glass-card {
+  background: rgba(28, 28, 30, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+body.dark-mode .glass-card:hover {
+  background: rgba(28, 28, 30, 0.7);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}
+
+body.dark-mode .nav-ultra, body.dark-mode .theme-toggle-btn, body.dark-mode .ios-back-btn {
+  background: rgba(28, 28, 30, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.1);
+}
+
+body.dark-mode .nav-pill.active {
+  background: #ffffff;
+  color: #000000;
+  box-shadow: 0 4px 12px rgba(255,255,255,0.15);
+}
+
+body.dark-mode .nav-pill:hover:not(.active) {
+  background: rgba(255,255,255,0.1);
+  color: #ffffff;
+}
+
+body.dark-mode .stepper-ultra {
+  background: rgba(44, 44, 46, 0.7);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+body.dark-mode .stepper-btn {
+  background: #3a3a3c;
+  color: #f5f5f7;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+body.dark-mode .stepper-btn:hover {
+  background: #48484a;
+}
+
+body.dark-mode .ios-bottom-sheet {
+  background: #1c1c1e;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+body.dark-mode .sheet-header {
+  background: rgba(28, 28, 30, 0.85);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+body.dark-mode .ios-close-btn {
+  background: rgba(255,255,255,0.1);
+  color: #a1a1a6;
+}
+
+body.dark-mode .ios-close-btn:hover {
+  background: rgba(255,255,255,0.2);
+  color: #f5f5f7;
+}
+
+body.dark-mode .drag-indicator {
+  background: rgba(255,255,255,0.2);
+}
+
+body.dark-mode .simple-reveal-card {
+  background: #1c1c1e !important;
+  border: 1px solid rgba(255,255,255,0.05) !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3) !important;
+}
+
+body.dark-mode .simple-reveal-card h3, body.dark-mode .simple-reveal-card h2 {
+  color: #f5f5f7 !important;
+}
+
+body.dark-mode .simple-reveal-card p {
+  color: var(--text-muted) !important;
+}
+
+body.dark-mode .pack-pill {
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(28, 28, 30, 0.3);
+}
+
+body.dark-mode .pack-pill:hover {
+  background: rgba(28, 28, 30, 0.7);
+}
+
+body.dark-mode .pack-pill.active {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #000000;
+}
+
+body.dark-mode .pack-pill.active .pack-date {
+  color: rgba(0,0,0,0.7);
+}
+
+/* App.jsx Inline Styles Overrides */
+body.dark-mode .ios-card {
+  background: rgba(28, 28, 30, 0.5) !important;
+  border-color: rgba(255,255,255,0.1) !important;
+}
+body.dark-mode .score-card {
+  background: #1c1c1e;
+  border-color: rgba(255,255,255,0.05);
+}
+
+/* App.jsx Inline Styles & Overrides */
+body.dark-mode .hero-glow {
+  display: none !important;
+}
+
+body.dark-mode .simple-reveal-card {
+  background: var(--card-bg) !important;
+  border-color: rgba(255,255,255,0.05) !important;
+}
+
+/* Collection Tracker Overrides */
+body.dark-mode .set-btn {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #f5f5f7;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+body.dark-mode .set-btn.active {
+  background-color: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
+}
+body.dark-mode .rarity-btn {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #f5f5f7;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+body.dark-mode .rarity-btn.active {
+  background-color: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
+}
+body.dark-mode .apple-segmented-control {
+  background: rgba(255, 255, 255, 0.1);
+}
+body.dark-mode .segmented-btn.active {
+  background: #2c2c2e;
+  color: #f5f5f7;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+body.dark-mode .progress-section {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+body.dark-mode .progress-bar-container {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+body.dark-mode .missing-overlay {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+body.dark-mode .decrement-btn {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Apple Search Bar Overrides */
+body.dark-mode .apple-search-input-wrapper {
+  background: rgba(28, 28, 30, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+body.dark-mode .apple-search-input-wrapper.active {
+  background: rgba(28, 28, 30, 0.95);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+body.dark-mode .apple-search-dropdown {
+  background: rgba(28, 28, 30, 0.85);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+body.dark-mode .search-result-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+body.dark-mode .search-result-set {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Pokemon Card Overrides */
+body.dark-mode .pokemon-card {
+  background-color: #1c1c1e;
+  border-color: rgba(255,255,255,0.1);
+}
+body.dark-mode .card-count-badge {
+  border-color: #1c1c1e;
+}
+
+/* Login Modal Overrides */
+body.dark-mode .login-modal-panel {
+  background: #1c1c1e !important;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+body.dark-mode .login-input-wrapper {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+body.dark-mode .login-input-wrapper.focused {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #fff;
+}
+body.dark-mode .login-input {
+  color: #f5f5f7;
+}
+
+/* Mobile Menu Dark Mode Overrides */
+body.dark-mode .mobile-menu-toggle {
+  background: rgba(28, 28, 30, 0.85);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #f5f5f7;
+}
+
+@media (max-width: 768px) {
+  body.dark-mode .nav-ultra {
+    background: rgba(28, 28, 30, 0.85) !important;
+  }
+}
+
+body.dark-mode .mobile-sidebar-backdrop {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+/* Button Overrides */
+body.dark-mode .btn-super {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
 }

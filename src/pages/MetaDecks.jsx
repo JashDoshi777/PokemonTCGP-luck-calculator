@@ -98,7 +98,7 @@ const MetaDecks = () => {
       )}
 
       {selectedDeck && (
-        <div className="deck-modal-scroll-container animate-fade-in" onClick={closeModal}>
+        <div className="deck-modal-scroll-container animate-fade-in" onClick={closeModal} data-lenis-prevent="true">
           <div className="deck-modal-content animate-slide-up" onClick={e => e.stopPropagation()}>
             <button className="deck-modal-close" onClick={closeModal}>
               <X size={24} />
