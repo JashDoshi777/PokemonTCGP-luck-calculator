@@ -2,8 +2,53 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import PokemonCard from '../components/PokemonCard';
 import AppleSearchBar from '../components/AppleSearchBar';
-import { ChevronLeft, ChevronRight, Filter, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Filter, CheckCircle2, Sparkles, Hand, MousePointer2 } from 'lucide-react';
 import './CollectionTracker.css';
+
+const AppleProgressRing = ({ percentage, size = 100, stroke = 8 }) => {
+  const radius = size / 2;
+  const normalizedRadius = radius - stroke * 2;
+  const circumference = normalizedRadius * 2 * Math.PI;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
+  return (
+    <div style={{ position: 'relative', width: size, height: size }}>
+      <svg height={size} width={size} style={{ transform: 'rotate(-90deg)' }}>
+        <circle
+          stroke="rgba(150, 150, 160, 0.2)"
+          fill="transparent"
+          strokeWidth={stroke}
+          r={normalizedRadius}
+          cx={radius}
+          cy={radius}
+        />
+        <circle
+          stroke="url(#progress-gradient)"
+          fill="transparent"
+          strokeWidth={stroke}
+          strokeDasharray={circumference + ' ' + circumference}
+          style={{ strokeDashoffset, transition: 'stroke-dashoffset 1s cubic-bezier(0.16, 1, 0.3, 1)' }}
+          strokeLinecap="round"
+          r={normalizedRadius}
+          cx={radius}
+          cy={radius}
+        />
+        <defs>
+          <linearGradient id="progress-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#34c759" />
+            <stop offset="100%" stopColor="#30d158" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div style={{ 
+        position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', 
+        fontWeight: 800, fontSize: `${size * 0.22}px`, color: 'var(--text-main)' 
+      }}>
+        {percentage}%
+      </div>
+    </div>
+  );
+};
 
 const CollectionTracker = () => {
   const { cards, sets, collection, wishlist, toggleWishlist, updateCardCount, batchUpdateCollection, loading } = useAppContext();
@@ -11,10 +56,16 @@ const CollectionTracker = () => {
   const [rarityFilter, setRarityFilter] = useState('All');
   const [ownershipFilter, setOwnershipFilter] = useState('All');
   const [isDragging, setIsDragging] = useState(false);
+  const [isPaintMode, setIsPaintMode] = useState(false);
   const scrollRef = useRef(null);
+  const lastMouseTime = useRef(0);
+  const draggedCardsRef = useRef(new Set());
 
   useEffect(() => {
-    const handleMouseUpGlobal = () => setIsDragging(false);
+    const handleMouseUpGlobal = () => {
+      setIsDragging(false);
+      draggedCardsRef.current.clear();
+    };
     window.addEventListener('mouseup', handleMouseUpGlobal);
     window.addEventListener('touchend', handleMouseUpGlobal);
     return () => {
@@ -93,6 +144,8 @@ const CollectionTracker = () => {
     const ownedInSet = fullSetCards.filter(c => (collection[`${c.set}-${c.number}`] || 0) > 0).length;
     return Math.round((ownedInSet / fullSetCards.length) * 100);
   }, [fullSetCards, collection]);
+
+
 
   const getRarityDisplay = (r) => {
     if (r === 'All') return 'All';
@@ -175,6 +228,8 @@ const CollectionTracker = () => {
         />
       </div>
 
+
+
       <div className="collection-header glass-card">
         <div className="set-selector">
           <h3 style={{ fontSize: '1.2rem', marginBottom: '16px' }}>Select Expansion</h3>
@@ -220,6 +275,15 @@ const CollectionTracker = () => {
             )}
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              <button
+                className={`select-all-btn paint-mode-toggle ${isPaintMode ? 'active' : ''}`}
+                onClick={() => setIsPaintMode(!isPaintMode)}
+                title={isPaintMode ? "Disable Paint Mode" : "Enable Paint Mode"}
+                style={{ background: isPaintMode ? 'rgba(52, 199, 89, 0.15)' : '', color: isPaintMode ? '#34c759' : '' }}
+              >
+                {isPaintMode ? <Hand size={16} /> : <MousePointer2 size={16} />} 
+                {isPaintMode ? 'Paint Mode: ON' : 'Paint Mode: OFF'}
+              </button>
               <div className="apple-segmented-control">
                 {['All', 'Owned', 'Missing'].map(f => (
                   <button
@@ -242,18 +306,21 @@ const CollectionTracker = () => {
           </div>
         </div>
 
-        <div className="progress-section">
-          <h3 style={{ fontSize: '1rem', marginBottom: '8px' }}>{activeSet === 'WISHLIST' ? 'Wishlist Progress' : 'Set Completion'}</h3>
-          <div className="progress-bar-container">
-            <div className="progress-bar-fill" style={{ width: `${setProgress}%` }}></div>
+        <div className="progress-section" style={{ display: 'flex', alignItems: 'center', gap: '24px', padding: '24px', background: 'rgba(0,0,0,0.02)', borderRadius: '24px', marginTop: '24px' }}>
+          <AppleProgressRing percentage={setProgress} size={90} stroke={8} />
+          <div>
+            <h3 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: '4px' }}>{activeSet === 'WISHLIST' ? 'Wishlist Progress' : 'Set Completion'}</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '1rem', fontWeight: 500 }}>
+              You have collected {setProgress}% of {activeSet === 'WISHLIST' ? 'your wishlist' : 'this expansion'}.
+            </p>
           </div>
-          <p className="progress-text">{setProgress}% Collected</p>
         </div>
       </div>
 
       <div
-        className="collection-grid"
+        className={`collection-grid ${isPaintMode ? 'paint-mode-active' : ''}`}
         onMouseLeave={() => setIsDragging(false)}
+        style={{ touchAction: isPaintMode ? 'none' : 'auto' }}
       >
         {activeSet === 'WISHLIST' && activeSetCards.length === 0 ? (
           <div style={{ gridColumn: '1 / -1', padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: 500 }}>
@@ -269,18 +336,36 @@ const CollectionTracker = () => {
                 key={cardId}
                 id={`card-${cardId}`}
                 className={`collection-card-wrapper ${isOwned ? 'owned' : 'missing'}`}
-                onMouseDown={(e) => {
-                  e.preventDefault(); // Prevent text selection/image dragging
+                onPointerDown={(e) => {
+                  if (e.pointerType === 'touch') {
+                    if (isPaintMode) {
+                      e.preventDefault();
+                      setIsDragging(true);
+                      draggedCardsRef.current.clear();
+                      draggedCardsRef.current.add(cardId);
+                      handleCardClick(card);
+                    }
+                    return;
+                  }
+                  lastMouseTime.current = Date.now();
+                  e.preventDefault();
                   setIsDragging(true);
+                  draggedCardsRef.current.clear();
+                  draggedCardsRef.current.add(cardId);
                   handleCardClick(card);
                 }}
-                onMouseEnter={() => handleDragEnter(card)}
-                onTouchStart={() => {
-                  setIsDragging(true);
-                  handleCardClick(card);
+                onPointerEnter={(e) => {
+                  if (e.pointerType === 'touch') return;
+                  if (isDragging && e.buttons === 1) {
+                    if (!draggedCardsRef.current.has(cardId)) {
+                      draggedCardsRef.current.add(cardId);
+                      handleCardClick(card);
+                    }
+                  }
                 }}
                 onTouchMove={(e) => {
-                  // Find element at touch point
+                  if (!isPaintMode) return;
+                  e.preventDefault();
                   const touch = e.touches[0];
                   const element = document.elementFromPoint(touch.clientX, touch.clientY);
                   if (element) {
@@ -290,25 +375,22 @@ const CollectionTracker = () => {
                       if (idParts.length >= 2) {
                         const set = idParts[0];
                         const num = idParts[1];
-                        // Avoid repeatedly calling updateCardCount on the same card while swiping
-                        // We rely on React state batching, but we can do a simple check
+                        const targetId = `${set}-${num}`;
                         const hoveredCard = activeSetCards.find(c => c.set === set && c.number.toString() === num);
-                        if (hoveredCard) {
-                          // Note: this might trigger multiple times per card during swipe if not debounced, 
-                          // but updateCardCount handles it gracefully. 
-                          // Let's add a dataset marker to prevent infinite rapid incrementing on the same swipe.
-                          if (wrapper.dataset.lastSwiped !== Date.now().toString().slice(0, -3)) {
-                            wrapper.dataset.lastSwiped = Date.now().toString().slice(0, -3);
-                            updateCardCount(`${set}-${num}`, 1);
-                          }
+                        if (hoveredCard && !draggedCardsRef.current.has(targetId)) {
+                          draggedCardsRef.current.add(targetId);
+                          updateCardCount(targetId, 1);
                         }
                       }
                     }
                   }
                 }}
-                onClick={() => {
-                  // Normal click is handled by onMouseDown to support drag initiation
-                  // But if we want to ensure click works on mobile without dragging, we can leave this
+                onClick={(e) => {
+                  // Ignore clicks while in paint mode since onPointerDown handles it
+                  if (isPaintMode && e.nativeEvent.pointerType === 'touch') return; 
+                  
+                  if (Date.now() - lastMouseTime.current < 500) return;
+                  handleCardClick(card);
                 }}
               >
                 <PokemonCard

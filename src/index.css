@@ -421,6 +421,22 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
 }
 
 /* Responsive Overrides */
+.app-view-container {
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform;
+}
+
+.app-view-container.fade-out {
+  opacity: 0;
+  transform: translateY(10px) scale(0.99);
+  pointer-events: none;
+}
+
+.app-view-container.fade-in {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
 .layout-grid {
   display: flex;
   flex-wrap: wrap;

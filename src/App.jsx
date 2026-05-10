@@ -19,6 +19,7 @@ function AppContent() {
   const { user, logout } = useAppContext();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('pokemontcgp-theme') || 'light';
   });
@@ -60,11 +61,20 @@ function AppContent() {
   const handleSetView = (newView) => {
     setIsMobileMenuOpen(false);
     if (newView === view) return;
-    setHistory(prev => [...prev, view]);
-    setVisitedViews(prev => new Set(prev).add(newView));
-    setView(newView);
-    setDexSelectedPack(null);
-    window.scrollTo(0, 0);
+    
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setHistory(prev => [...prev, view]);
+      setVisitedViews(prev => new Set(prev).add(newView));
+      setView(newView);
+      setDexSelectedPack(null);
+      window.scrollTo(0, 0);
+      
+      // Let React render the new view, then fade back in
+      requestAnimationFrame(() => {
+        setTimeout(() => setIsTransitioning(false), 50);
+      });
+    }, 250); // Match CSS transition duration
   };
 
   const handleBack = () => {
@@ -75,10 +85,17 @@ function AppContent() {
     }
     if (history.length > 0) {
       const prev = history[history.length - 1];
-      setHistory(h => h.slice(0, -1));
-      setView(prev);
-      setDexSelectedPack(null);
-      window.scrollTo(0, 0);
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setHistory(h => h.slice(0, -1));
+        setView(prev);
+        setDexSelectedPack(null);
+        window.scrollTo(0, 0);
+        
+        requestAnimationFrame(() => {
+          setTimeout(() => setIsTransitioning(false), 50);
+        });
+      }, 250);
     }
   };
 
@@ -152,7 +169,10 @@ function AppContent() {
         </div>
       </nav>
 
-      <div style={{ paddingTop: '100px', paddingBottom: '100px', maxWidth: '1400px', margin: '0 auto', paddingLeft: '5%', paddingRight: '5%' }}>
+      <div 
+        className={`app-view-container ${isTransitioning ? 'fade-out' : 'fade-in'}`}
+        style={{ paddingTop: '100px', paddingBottom: '100px', maxWidth: '1400px', margin: '0 auto', paddingLeft: '5%', paddingRight: '5%' }}
+      >
 
         {/* HOME VIEW */}
         {view === 'home' && <LandingPage setView={handleSetView} />}

@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
 import PokemonCard from '../components/PokemonCard';
-import { Search, Save, Trash2, ArrowLeft, FolderOpen } from 'lucide-react';
+import { Search, Save, Trash2, ArrowLeft, FolderOpen, Download } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import './DeckBuilder.css';
 
 const MAX_DECK_SIZE = 20;
@@ -14,6 +15,7 @@ const DeckBuilder = ({ onRequestLogin }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [deck, setDeck] = useState([]);
   const [deckName, setDeckName] = useState('My Custom Deck');
+  const deckRef = useRef(null);
 
   const filteredCards = useMemo(() => {
     if (!cards) return [];
@@ -36,6 +38,52 @@ const DeckBuilder = ({ onRequestLogin }) => {
 
   const removeCardFromDeck = (indexToRemove) => {
     setDeck(deck.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  const exportDeckAsImage = async (ref, name) => {
+    if (!ref.current) return;
+    try {
+      const isDark = document.body.classList.contains('dark-mode');
+      
+      // Clone the element to break out of flexbox/height constraints
+      const clone = ref.current.cloneNode(true);
+      clone.style.position = 'absolute';
+      clone.style.left = '-9999px';
+      clone.style.top = '0';
+      clone.style.height = 'auto';
+      clone.style.maxHeight = 'none';
+      clone.style.overflow = 'visible';
+      clone.style.width = ref.current.offsetWidth + 'px';
+      
+      const grid = clone.querySelector('.active-deck-grid') || clone.querySelector('.saved-deck-detail-grid');
+      if (grid) {
+        grid.style.overflowY = 'visible';
+        grid.style.maxHeight = 'none';
+        grid.style.height = 'auto';
+      }
+
+      document.body.appendChild(clone);
+
+      // Give browser time to paint clone
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const canvas = await html2canvas(clone, {
+        backgroundColor: isDark ? '#1c1c1e' : '#f0f0f5',
+        scale: 2,
+        useCORS: true,
+        logging: false
+      });
+      
+      document.body.removeChild(clone);
+
+      const dataUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = `${name || 'Pokemon_Deck'}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error('Failed to export deck image', err);
+    }
   };
 
   const handleSave = () => {
@@ -128,7 +176,7 @@ const DeckBuilder = ({ onRequestLogin }) => {
             </div>
           </div>
 
-          <div className="deck-pane glass-card">
+          <div className="deck-pane glass-card" ref={deckRef} style={{ padding: '30px' }}>
             <div className="pane-header" style={{ marginBottom: '15px' }}>
               <input 
                 type="text" 
@@ -144,11 +192,14 @@ const DeckBuilder = ({ onRequestLogin }) => {
               </div>
             </div>
             
-            <div className="deck-actions">
+            <div className="deck-actions" data-html2canvas-ignore="true">
               <button className="btn-super" style={{ padding: '10px 20px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }} onClick={handleSave}>
                 <Save size={16} /> Save Deck
               </button>
-              <button className="btn-super" style={{ padding: '10px 20px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.05)', color: 'var(--text-main)' }} onClick={handleClear}>
+              <button className="btn-super" style={{ padding: '10px 20px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.05)', color: 'var(--text-main)' }} onClick={() => exportDeckAsImage(deckRef, deckName)}>
+                <Download size={16} /> Export
+              </button>
+              <button className="btn-super" style={{ padding: '10px 20px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,59,48,0.1)', color: '#ff3b30' }} onClick={handleClear}>
                 <Trash2 size={16} /> Clear
               </button>
             </div>

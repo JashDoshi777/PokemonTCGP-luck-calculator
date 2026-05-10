@@ -56,22 +56,43 @@ export const AppProvider = ({ children }) => {
             });
             if (res.ok) {
               const data = await res.json();
-              if (data.collection) {
-                setCollection(data.collection);
-                localStorage.setItem('tcgp_collection', JSON.stringify(data.collection));
+              
+              // Safely merge guest data with cloud data
+              const localCollectionStr = localStorage.getItem('tcgp_collection');
+              const localCollection = localCollectionStr ? JSON.parse(localCollectionStr) : {};
+              const mergedCollection = { ...localCollection, ...(data.collection || {}) };
+              
+              if (Object.keys(mergedCollection).length > 0) {
+                setCollection(mergedCollection);
+                localStorage.setItem('tcgp_collection', JSON.stringify(mergedCollection));
               }
-              if (data.wishlist) {
-                setWishlist(data.wishlist);
-                localStorage.setItem('tcgp_wishlist', JSON.stringify(data.wishlist));
+
+              const localWishlistStr = localStorage.getItem('tcgp_wishlist');
+              const localWishlist = localWishlistStr ? JSON.parse(localWishlistStr) : {};
+              const mergedWishlist = { ...localWishlist, ...(data.wishlist || {}) };
+              
+              if (Object.keys(mergedWishlist).length > 0) {
+                setWishlist(mergedWishlist);
+                localStorage.setItem('tcgp_wishlist', JSON.stringify(mergedWishlist));
               }
-              if (data.customDecks) {
-                let parsedDecks = data.customDecks;
-                if (typeof parsedDecks === 'string') {
-                  try { parsedDecks = JSON.parse(parsedDecks); } catch(e) { parsedDecks = []; }
-                }
-                if (!Array.isArray(parsedDecks)) parsedDecks = [];
-                setCustomDecks(parsedDecks);
-                localStorage.setItem('tcgp_decks', JSON.stringify(parsedDecks));
+
+              let parsedDecks = data.customDecks;
+              if (typeof parsedDecks === 'string') {
+                try { parsedDecks = JSON.parse(parsedDecks); } catch(e) { parsedDecks = []; }
+              }
+              if (!Array.isArray(parsedDecks)) parsedDecks = [];
+
+              const localDecksStr = localStorage.getItem('tcgp_decks');
+              const localDecks = localDecksStr ? JSON.parse(localDecksStr) : [];
+              
+              const deckMap = new Map();
+              localDecks.forEach(d => { if (d && d.id) deckMap.set(d.id, d) });
+              parsedDecks.forEach(d => { if (d && d.id) deckMap.set(d.id, d) });
+              const mergedDecks = Array.from(deckMap.values());
+
+              if (mergedDecks.length > 0) {
+                setCustomDecks(mergedDecks);
+                localStorage.setItem('tcgp_decks', JSON.stringify(mergedDecks));
               }
             }
           } catch (e) {

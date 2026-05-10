@@ -362,3 +362,11 @@
     padding: 4px 8px;
   }
 }
+
+/* Hide Paint Mode toggle on desktop, since mouse handles drag natively */
+@media (min-width: 769px) {
+  .paint-mode-toggle {
+    display: none !important;
+  }
+}
+
