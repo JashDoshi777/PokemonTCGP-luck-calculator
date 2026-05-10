@@ -305,19 +305,22 @@
 
 @media (max-width: 768px) {
   .pane-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
   }
   .search-box {
     width: 100%;
+    order: 2;
   }
   .active-deck-grid {
     grid-template-columns: repeat(5, 1fr);
   }
   .deck-name-input {
-    width: 100%;
-    font-size: 1.3rem;
+    flex: 1;
+    min-width: 0;
+    font-size: 1.2rem;
   }
   .deck-actions {
     width: 100%;

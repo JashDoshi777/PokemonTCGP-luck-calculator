@@ -205,7 +205,7 @@
   background: rgba(240, 240, 245, 0.6); /* Very light iOS overlay */
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  z-index: 1000;
+  z-index: 9999;
   display: flex;
   justify-content: center;
   align-items: flex-start; /* Align top for scrolling */
@@ -349,7 +349,8 @@
 
   .deck-modal-scroll-container {
     padding: 0;
-    align-items: flex-end; /* Bottom sheet style on mobile */
+    padding-top: 80px; /* Create iOS bottom sheet gap at the top */
+    align-items: flex-start; /* Fix flex-end scroll cutoff bug */
   }
 
   .deck-modal-content {
@@ -357,6 +358,8 @@
     padding: 32px 24px;
     padding-bottom: env(safe-area-inset-bottom, 32px);
     margin-bottom: 0;
+    margin-top: auto; /* Push to bottom but allow natural scroll */
+    min-height: 50vh;
   }
 
   .deck-modal-title {

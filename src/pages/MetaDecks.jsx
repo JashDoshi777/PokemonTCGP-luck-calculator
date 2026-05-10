@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useAppContext } from '../context/AppContext';
 import { META_DECKS } from '../data/metaDecks';
 import PokemonCard from '../components/PokemonCard';
@@ -98,30 +99,33 @@ const MetaDecks = () => {
       )}
 
       {selectedDeck && (
-        <div className="deck-modal-scroll-container animate-fade-in" onClick={closeModal} data-lenis-prevent="true">
-          <div className="deck-modal-content animate-slide-up" onClick={e => e.stopPropagation()}>
-            <button className="deck-modal-close" onClick={closeModal}>
-              <X size={24} />
-            </button>
-            
-            <div className="deck-modal-header">
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '16px' }}>
-                <span className={`ios-pill tier-pill ${selectedDeck.tier.toLowerCase().replace('/', '-')}`}>{selectedDeck.tier}</span>
-                <span className={`ios-pill type-pill type-${selectedDeck.type.toLowerCase()}`}>{selectedDeck.type}</span>
-              </div>
-              <h2 className="deck-modal-title">{selectedDeck.name}</h2>
-              <p className="deck-modal-desc">{selectedDeck.description}</p>
-            </div>
-
-            <div className="deck-modal-cards-grid">
-              {resolveDeckCards(selectedDeck.cards).map((rc, idx) => (
-                <div className="deck-modal-card-wrapper" key={idx}>
-                  <PokemonCard card={rc.card} count={rc.count} />
+        createPortal(
+          <div className="deck-modal-scroll-container animate-fade-in" onClick={closeModal} data-lenis-prevent="true">
+            <div className="deck-modal-content animate-slide-up" onClick={e => e.stopPropagation()}>
+              <button className="deck-modal-close" onClick={closeModal}>
+                <X size={24} />
+              </button>
+              
+              <div className="deck-modal-header">
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '16px' }}>
+                  <span className={`ios-pill tier-pill ${selectedDeck.tier.toLowerCase().replace('/', '-')}`}>{selectedDeck.tier}</span>
+                  <span className={`ios-pill type-pill type-${selectedDeck.type.toLowerCase()}`}>{selectedDeck.type}</span>
                 </div>
-              ))}
+                <h2 className="deck-modal-title">{selectedDeck.name}</h2>
+                <p className="deck-modal-desc">{selectedDeck.description}</p>
+              </div>
+
+              <div className="deck-modal-cards-grid">
+                {resolveDeckCards(selectedDeck.cards).map((rc, idx) => (
+                  <div className="deck-modal-card-wrapper" key={idx}>
+                    <PokemonCard card={rc.card} count={rc.count} />
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        </div>
+          </div>,
+          document.body
+        )
       )}
     </div>
   );
