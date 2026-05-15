@@ -422,19 +422,19 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
 
 /* Responsive Overrides */
 .app-view-container {
-  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: opacity, transform;
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity;
 }
 
 .app-view-container.fade-out {
   opacity: 0;
-  transform: translateY(10px) scale(0.99);
+  
   pointer-events: none;
 }
 
 .app-view-container.fade-in {
   opacity: 1;
-  transform: translateY(0) scale(1);
+  
 }
 
 .layout-grid {
@@ -1288,12 +1288,15 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
 
   /* Bottom Sheet Mobile */
   .ios-backdrop {
-    align-items: flex-end;
+    align-items: flex-end !important;
   }
   .ios-bottom-sheet {
     max-width: 100% !important;
     border-radius: 32px 32px 0 0 !important;
-    max-height: 85vh;
+    max-height: 85vh !important;
+    margin-bottom: 0 !important;
+    margin-top: auto !important;
+    transform: none !important;
   }
   
   /* Landing page empty state text size */

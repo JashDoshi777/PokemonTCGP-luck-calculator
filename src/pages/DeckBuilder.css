@@ -324,11 +324,15 @@
   }
   .deck-actions {
     width: 100%;
-    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
   }
   .deck-actions button {
     flex: 1;
-    text-align: center;
+    min-width: max-content;
+    padding: 12px 10px !important;
+    font-size: 0.85rem !important;
+    justify-content: center;
   }
   .saved-decks-grid {
     grid-template-columns: 1fr;
