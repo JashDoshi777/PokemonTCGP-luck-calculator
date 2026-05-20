@@ -199,12 +199,12 @@
   transition: transform 0.2s ease;
 }
 
-.collection-card-wrapper.missing {
+.collection-card-wrapper.missing .pokemon-card {
   opacity: 0.6;
   filter: grayscale(100%);
 }
 
-.collection-card-wrapper.owned {
+.collection-card-wrapper.owned .pokemon-card {
   opacity: 1;
   filter: none;
 }

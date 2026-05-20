@@ -42,6 +42,9 @@ const PokemonCard = ({ card, count, isWishlisted, onToggleWishlist }) => {
       {onToggleWishlist && (
         <button 
           className={`card-wishlist-btn ${isWishlisted ? 'active' : ''}`}
+          onPointerDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
           onClick={(e) => { e.stopPropagation(); onToggleWishlist(); }}
         >
           <Heart size={16} fill={isWishlisted ? "#ff3b30" : "none"} color={isWishlisted ? "#ff3b30" : "white"} />

@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import PokemonCard from '../components/PokemonCard';
 import AppleSearchBar from '../components/AppleSearchBar';
-import { ChevronLeft, ChevronRight, Filter, CheckCircle2, Sparkles, Hand, MousePointer2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Filter, CheckCircle2, Sparkles, Hand, MousePointer2, Search, X } from 'lucide-react';
 import './CollectionTracker.css';
 
 const AppleProgressRing = ({ percentage, size = 100, stroke = 8 }) => {
@@ -57,6 +57,8 @@ const CollectionTracker = () => {
   const [ownershipFilter, setOwnershipFilter] = useState('All');
   const [isDragging, setIsDragging] = useState(false);
   const [isPaintMode, setIsPaintMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchActive, setIsSearchActive] = useState(false);
   const scrollRef = useRef(null);
   const lastMouseTime = useRef(0);
   const draggedCardsRef = useRef(new Set());
@@ -103,7 +105,13 @@ const CollectionTracker = () => {
   }, [cards, activeSet, wishlist]);
 
   const activeSetCards = useMemo(() => {
-    let filtered = fullSetCards;
+    let filtered = cards || [];
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(c => c.name.toLowerCase().includes(q));
+    } else {
+      filtered = fullSetCards;
+    }
     if (rarityFilter !== 'All') {
       filtered = filtered.filter(c => c.rarity === rarityFilter);
     }
@@ -113,7 +121,7 @@ const CollectionTracker = () => {
       filtered = filtered.filter(c => (collection[`${c.set}-${c.number}`] || 0) === 0);
     }
     return filtered;
-  }, [fullSetCards, rarityFilter, ownershipFilter, collection]);
+  }, [cards, fullSetCards, rarityFilter, ownershipFilter, collection, searchQuery]);
 
   const uniqueRarities = useMemo(() => {
     if (fullSetCards.length === 0) return [];
@@ -222,10 +230,28 @@ const CollectionTracker = () => {
       </div>
 
       <div style={{ marginBottom: '30px' }}>
-        <AppleSearchBar
-          placeholder="Search any card to add to collection..."
-          onSelectCard={handleSearchSelect}
-        />
+        <div className="apple-search-container">
+          <div className={`apple-search-input-wrapper ${isSearchActive || searchQuery ? 'active' : ''}`}>
+            <Search size={20} className="apple-search-icon" />
+            <input 
+              type="text"
+              className="apple-search-input"
+              placeholder="Search any card across all expansions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setIsSearchActive(true)}
+              onBlur={() => setIsSearchActive(false)}
+            />
+            {searchQuery && (
+              <button 
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px', borderRadius: '50%', color: '#999' }}
+                onClick={() => setSearchQuery('')}
+              >
+                <X size={18} />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
 
@@ -322,9 +348,14 @@ const CollectionTracker = () => {
         onMouseLeave={() => setIsDragging(false)}
         style={{ touchAction: isPaintMode ? 'none' : 'auto' }}
       >
-        {activeSet === 'WISHLIST' && activeSetCards.length === 0 ? (
+        {activeSetCards.length === 0 ? (
           <div style={{ gridColumn: '1 / -1', padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: 500 }}>
-            Your wishlist is empty. Add cards by clicking the heart icon on any card!
+            {searchQuery 
+              ? `No cards found matching "${searchQuery}"`
+              : activeSet === 'WISHLIST' 
+                ? "Your wishlist is empty. Add cards by clicking the heart icon on any card!" 
+                : "No cards found in this selection."
+            }
           </div>
         ) : (
           activeSetCards.map((card) => {
@@ -403,6 +434,7 @@ const CollectionTracker = () => {
                 {isOwned && (
                   <button
                     className="decrement-btn"
+                    onPointerDown={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()} // Prevent drag start when clicking decrement
                     onTouchStart={(e) => e.stopPropagation()}
                     onClick={(e) => { e.stopPropagation(); updateCardCount(cardId, -1); }}
