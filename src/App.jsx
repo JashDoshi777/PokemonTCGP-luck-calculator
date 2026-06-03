@@ -12,6 +12,7 @@ import { AppProvider } from './context/AppContext';
 import MetaDecks from './pages/MetaDecks';
 import DeckBuilder from './pages/DeckBuilder';
 import CollectionTracker from './pages/CollectionTracker';
+import TradingCenter from './pages/TradingCenter';
 import LoginModal from './components/LoginModal';
 import { useAppContext } from './context/AppContext';
 
@@ -147,7 +148,7 @@ function AppContent() {
       </button>
 
       <nav className={`nav-ultra ${isMobileMenuOpen ? 'is-open' : ''}`}>
-        {['home', 'calc', 'dex', 'meta', 'decks', 'collection'].map(v => (
+        {['home', 'calc', 'dex', 'meta', 'decks', 'collection', 'trading'].map(v => (
           <button key={v} className={`nav-pill ${view === v ? 'active' : ''}`} onClick={() => handleSetView(v)}>
             {v.charAt(0).toUpperCase() + v.slice(1)}
           </button>
@@ -254,6 +255,9 @@ function AppContent() {
         </div>
         <div style={{ display: view === 'collection' ? 'block' : 'none' }}>
           {visitedViews.has('collection') && <CollectionTracker />}
+        </div>
+        <div style={{ display: view === 'trading' ? 'block' : 'none' }}>
+          {visitedViews.has('trading') && <TradingCenter onRequestLogin={() => setShowLoginModal(true)} />}
         </div>
 
       </div>
