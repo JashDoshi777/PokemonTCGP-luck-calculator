@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
 import PokemonCard from '../components/PokemonCard';
-import { Search, X, Check, MessageCircle, Heart, ArrowRightLeft } from 'lucide-react';
+import { Search, X, Check, MessageCircle, Heart, ArrowRightLeft, Bell, Star } from 'lucide-react';
 import './CollectionTracker.css'; // Reuse existing styles where possible
 
 const TradingCenter = ({ onRequestLogin }) => {
@@ -26,12 +26,29 @@ const TradingCenter = ({ onRequestLogin }) => {
   const chatPollRef = useRef(null);
   const chatContainerRef = useRef(null);
 
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [myReputation, setMyReputation] = useState(0);
+
   const API_URL = import.meta.env.VITE_API_URL || '/api';
 
   useEffect(() => {
     if (user && token) {
       fetchUserData();
       fetchTradeListing();
+      
+      const fetchNotifications = async () => {
+        try {
+          const res = await fetch(`${API_URL}/trade/notifications`, { headers: { 'Authorization': `Bearer ${token}` } });
+          const data = await res.json();
+          setUnreadCount(data.unreadCount || 0);
+        } catch (e) {
+          console.error('fetchNotifications error:', e);
+        }
+      };
+      
+      fetchNotifications();
+      const notifInterval = setInterval(fetchNotifications, 10000);
+      return () => clearInterval(notifInterval);
     }
   }, [user, token]);
 
@@ -40,6 +57,7 @@ const TradingCenter = ({ onRequestLogin }) => {
       const res = await fetch(`${API_URL}/user`, { headers: { 'Authorization': `Bearer ${token}` } });
       const data = await res.json();
       if (data.inGameId) setInGameId(data.inGameId);
+      if (data.successfulTrades) setMyReputation(data.successfulTrades);
     } catch (e) {
       console.error(e);
     }
@@ -203,6 +221,46 @@ const TradingCenter = ({ onRequestLogin }) => {
     }
   };
 
+  const endorseTrader = async (targetUserId) => {
+    try {
+      const res = await fetch(`${API_URL}/trade/endorse/${targetUserId}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setChatUser(prev => ({ ...prev, successfulTrades: (prev.successfulTrades || 0) + 1 }));
+        setMatches(prev => prev.map(m => m.userId === targetUserId ? { ...m, successfulTrades: (m.successfulTrades || 0) + 1 } : m));
+      } else {
+        alert(data.error || "Could not endorse");
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const completeTrade = async () => {
+    if (!chatUser) return;
+    if (!confirm("This will remove the traded cards from your listing. Continue?")) return;
+
+    // Remove the matching cards from offering and requesting
+    const newOffering = offering.filter(cardId => !chatUser.iGiveTheyWant.includes(cardId));
+    const newRequesting = requesting.filter(cardId => !chatUser.theyGiveIWant.includes(cardId));
+    
+    setOffering(newOffering);
+    setRequesting(newRequesting);
+    
+    // Save to backend
+    await saveTradeListing(newOffering, newRequesting);
+    
+    // Re-fetch matches so this match disappears
+    fetchMatches();
+    
+    // Close the chat
+    closeChat();
+    alert("Trade completed! Cards removed from your listing.");
+  };
+
   useEffect(() => {
     return () => {
       if (chatPollRef.current) clearInterval(chatPollRef.current);
@@ -240,6 +298,11 @@ const TradingCenter = ({ onRequestLogin }) => {
     );
   };
 
+  const isOnline = (secondsSinceActive) => {
+    if (secondsSinceActive === null || secondsSinceActive === undefined) return false;
+    return secondsSinceActive < 5 * 60; // 5 mins in seconds
+  };
+
   return (
     <>
       <div className="collection-page animate-enter">
@@ -253,12 +316,29 @@ const TradingCenter = ({ onRequestLogin }) => {
             List your dupes, specify what you need, and the engine will find perfect matches.
           </p>
         </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(255,214,10,0.1)', padding: '12px 24px', borderRadius: '20px', border: '1px solid rgba(255,214,10,0.2)', boxShadow: '0 8px 16px rgba(0,0,0,0.1)' }}>
+          <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#ffd60a', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Endorsements</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#ffd60a', fontSize: '2.2rem', fontWeight: 800, lineHeight: 1 }}>
+            <Star size={26} fill="currentColor" /> {myReputation}
+          </div>
+        </div>
       </div>
 
       <div style={{ marginBottom: '30px', display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-        <div className="apple-segmented-control" style={{ width: 'auto' }}>
-          <button className={`segmented-btn ${activeTab === 'listing' ? 'active' : ''}`} onClick={() => setActiveTab('listing')}>My Listing</button>
-          <button className={`segmented-btn ${activeTab === 'matches' ? 'active' : ''}`} onClick={() => setActiveTab('matches')}>Matches</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div className="apple-segmented-control" style={{ width: 'auto' }}>
+            <button className={`segmented-btn ${activeTab === 'listing' ? 'active' : ''}`} onClick={() => setActiveTab('listing')}>My Listing</button>
+            <button className={`segmented-btn ${activeTab === 'matches' ? 'active' : ''}`} onClick={() => setActiveTab('matches')}>Matches</button>
+          </div>
+          <div style={{ position: 'relative', cursor: 'pointer', padding: '10px' }} onClick={() => setActiveTab('matches')}>
+            <Bell size={24} color={unreadCount > 0 ? '#ff3b30' : 'var(--text-muted)'} />
+            {unreadCount > 0 && (
+              <span style={{ position: 'absolute', top: 5, right: 5, background: '#ff3b30', color: 'white', borderRadius: '10px', padding: '2px 6px', fontSize: '0.7rem', fontWeight: 800 }}>
+                {unreadCount}
+              </span>
+            )}
+          </div>
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(0,0,0,0.2)', padding: '8px 20px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)' }}>
@@ -316,16 +396,27 @@ const TradingCenter = ({ onRequestLogin }) => {
               <div key={m.userId} className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, #FF3B30, #FF2D55)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1.2rem' }}>
+                    <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, #FF3B30, #FF2D55)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1.2rem', position: 'relative' }}>
                       {m.username.charAt(0).toUpperCase()}
+                      <div style={{ position: 'absolute', bottom: -2, right: -2, width: 12, height: 12, borderRadius: '50%', background: isOnline(m.lastActive) ? '#34c759' : '#8e8e93', border: '2px solid var(--bg-main)' }}></div>
                     </div>
                     <div>
-                      <h4 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>{m.username}</h4>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h4 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>{m.username}</h4>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255,214,10,0.15)', color: '#ffd60a', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 700 }}>
+                          <Star size={12} fill="currentColor" /> {m.successfulTrades || 0}
+                        </div>
+                      </div>
                       <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>ID: {m.inGameId || 'Not provided'}</div>
                     </div>
                   </div>
-                  <button className="btn-super" style={{ background: '#0a84ff', display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => startChat(m)}>
+                  <button className="btn-super" style={{ background: '#0a84ff', display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }} onClick={() => startChat(m)}>
                     <MessageCircle size={18} /> Chat
+                    {m.unreadMessages > 0 && (
+                      <span style={{ position: 'absolute', top: -5, right: -5, background: '#ff3b30', color: 'white', borderRadius: '10px', padding: '2px 6px', fontSize: '0.7rem', fontWeight: 800 }}>
+                        {m.unreadMessages}
+                      </span>
+                    )}
                   </button>
                 </div>
 
@@ -417,13 +508,27 @@ const TradingCenter = ({ onRequestLogin }) => {
               <button className="ios-close-btn" onClick={closeChat}>
                 <X size={12} />
               </button>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #0a84ff, #5ac8fa)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #0a84ff, #5ac8fa)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, position: 'relative' }}>
                   {chatUser.username.charAt(0).toUpperCase()}
+                  <div style={{ position: 'absolute', bottom: -2, right: -2, width: 10, height: 10, borderRadius: '50%', background: isOnline(chatUser.lastActive) ? '#34c759' : '#8e8e93', border: '2px solid var(--bg-main)' }}></div>
                 </div>
-                <div>
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>{chatUser.username}</h3>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>ID: {chatUser.inGameId || 'Unknown'}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>{chatUser.username}</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255,214,10,0.15)', color: '#ffd60a', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 700 }}>
+                      <Star size={12} fill="currentColor" /> {chatUser.successfulTrades || 0}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{isOnline(chatUser.lastActive) ? 'Online now' : 'Offline'}</div>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button onClick={() => endorseTrader(chatUser.userId)} style={{ background: 'rgba(52, 199, 89, 0.1)', color: '#34c759', border: 'none', padding: '6px 12px', borderRadius: '14px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Star size={14} fill="currentColor" /> Endorse
+                  </button>
+                  <button onClick={completeTrade} style={{ background: 'rgba(0, 122, 255, 0.1)', color: '#0a84ff', border: 'none', padding: '6px 12px', borderRadius: '14px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Check size={14} /> Trade Completed
+                  </button>
                 </div>
               </div>
             </div>

@@ -18,7 +18,6 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-// Middleware to verify JWT
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -27,6 +26,10 @@ const authenticateToken = (req, res, next) => {
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) return res.sendStatus(403);
     req.user = user;
+    
+    // Update last_active timestamp in the background
+    pool.query('UPDATE user_data SET last_active = CURRENT_TIMESTAMP WHERE user_id = $1', [user.id]).catch(console.error);
+
     next();
   });
 };
@@ -49,15 +52,15 @@ app.get('/api/init', async (req, res) => {
         wishlist JSONB DEFAULT '{}'::jsonb,
         custom_decks JSONB DEFAULT '[]'::jsonb,
         in_game_id VARCHAR(255),
+        successful_trades INTEGER DEFAULT 0,
+        last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    // Add in_game_id to existing user_data if missing
-    try {
-      await pool.query(`ALTER TABLE user_data ADD COLUMN in_game_id VARCHAR(255);`);
-    } catch (e) {
-      // Column might already exist, ignore error
-    }
+    // Add columns to existing user_data if missing
+    try { await pool.query(`ALTER TABLE user_data ADD COLUMN in_game_id VARCHAR(255);`); } catch (e) {}
+    try { await pool.query(`ALTER TABLE user_data ADD COLUMN successful_trades INTEGER DEFAULT 0;`); } catch (e) {}
+    try { await pool.query(`ALTER TABLE user_data ADD COLUMN last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`); } catch (e) {}
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS trades (
@@ -75,7 +78,19 @@ app.get('/api/init', async (req, res) => {
         sender_id INTEGER REFERENCES users(id),
         receiver_id INTEGER REFERENCES users(id),
         content TEXT NOT NULL,
+        is_read BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    try { await pool.query(`ALTER TABLE messages ADD COLUMN is_read BOOLEAN DEFAULT FALSE;`); } catch (e) {}
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS endorsements (
+        id SERIAL PRIMARY KEY,
+        endorser_id INTEGER REFERENCES users(id),
+        endorsed_id INTEGER REFERENCES users(id),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(endorser_id, endorsed_id)
       );
     `);
 
@@ -198,9 +213,10 @@ app.post('/api/sync', authenticateToken, async (req, res) => {
 // Get User Data (specifically for inGameId)
 app.get('/api/user', authenticateToken, async (req, res) => {
   try {
-    const result = await pool.query('SELECT in_game_id FROM user_data WHERE user_id = $1', [req.user.id]);
+    const result = await pool.query('SELECT in_game_id, successful_trades FROM user_data WHERE user_id = $1', [req.user.id]);
     const inGameId = result.rows.length > 0 ? result.rows[0].in_game_id : null;
-    res.json({ inGameId });
+    const successfulTrades = result.rows.length > 0 ? (result.rows[0].successful_trades || 0) : 0;
+    res.json({ inGameId, successfulTrades });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -262,7 +278,8 @@ app.get('/api/trade/matches', authenticateToken, async (req, res) => {
     // Find others where they offer what I request, and they request what I offer
     // Using Postgres JSONB ?| operator to check if ANY element matches
     const matchesQuery = `
-      SELECT t.user_id as match_user_id, u.username as match_username, ud.in_game_id, t.offering_cards as match_offering, t.requesting_cards as match_requesting
+      SELECT t.user_id as match_user_id, u.username as match_username, ud.in_game_id, ud.successful_trades, EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - ud.last_active)) as seconds_since_active, t.offering_cards as match_offering, t.requesting_cards as match_requesting,
+             (SELECT COUNT(*) FROM messages m WHERE m.sender_id = t.user_id AND m.receiver_id = $1 AND m.is_read = FALSE) as unread_messages
       FROM trades t
       JOIN users u ON t.user_id = u.id
       LEFT JOIN user_data ud ON t.user_id = ud.user_id
@@ -288,6 +305,9 @@ app.get('/api/trade/matches', authenticateToken, async (req, res) => {
         userId: m.match_user_id,
         username: m.match_username,
         inGameId: m.in_game_id,
+        successfulTrades: m.successful_trades || 0,
+        lastActive: m.seconds_since_active !== null ? parseInt(m.seconds_since_active, 10) : null,
+        unreadMessages: parseInt(m.unread_messages, 10) || 0,
         theyGiveIWant,
         iGiveTheyWant
       };
@@ -303,6 +323,9 @@ app.get('/api/trade/matches', authenticateToken, async (req, res) => {
 app.get('/api/chat/:userId', authenticateToken, async (req, res) => {
   try {
     const otherUserId = req.params.userId;
+    // Mark messages as read in the background
+    pool.query(`UPDATE messages SET is_read = TRUE WHERE receiver_id = $1 AND sender_id = $2 AND is_read = FALSE`, [req.user.id, otherUserId]).catch(console.error);
+
     const result = await pool.query(`
       SELECT m.*, u.username as sender_username 
       FROM messages m
@@ -334,6 +357,40 @@ app.post('/api/chat/:userId', authenticateToken, async (req, res) => {
     `, [req.user.id, receiverId, content]);
     
     res.json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Notifications
+app.get('/api/trade/notifications', authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT COUNT(DISTINCT sender_id) as unread FROM messages WHERE receiver_id = $1 AND is_read = FALSE', [req.user.id]);
+    res.json({ unreadCount: parseInt(result.rows[0].unread, 10) });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Endorse Trader
+app.post('/api/trade/endorse/:userId', authenticateToken, async (req, res) => {
+  try {
+    const endorsedId = req.params.userId;
+    if (endorsedId == req.user.id) return res.status(400).json({ error: "Cannot endorse yourself" });
+
+    // Try to insert endorsement
+    const insertResult = await pool.query(`
+      INSERT INTO endorsements (endorser_id, endorsed_id) 
+      VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING id
+    `, [req.user.id, endorsedId]);
+
+    if (insertResult.rowCount > 0) {
+      // Successfully inserted, increment successful_trades
+      await pool.query('UPDATE user_data SET successful_trades = successful_trades + 1 WHERE user_id = $1', [endorsedId]);
+      res.json({ success: true, message: "Endorsement added" });
+    } else {
+      res.status(400).json({ error: "Already endorsed this user" });
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
