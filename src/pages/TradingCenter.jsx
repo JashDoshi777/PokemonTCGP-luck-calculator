@@ -358,7 +358,7 @@ const TradingCenter = ({ onRequestLogin }) => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
           {/* Offering Section */}
           <div className="glass-card" style={{ padding: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
               <h3 style={{ fontSize: '1.3rem', fontWeight: 800 }}>Cards I'm Offering</h3>
               <button className="btn-super" style={{ padding: '8px 16px', fontSize: '0.9rem' }} onClick={() => setSearchMode('offering')}>+ Add Cards</button>
             </div>
@@ -420,7 +420,7 @@ const TradingCenter = ({ onRequestLogin }) => {
                   </button>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', background: 'rgba(0,0,0,0.02)', padding: '16px', borderRadius: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', background: 'rgba(0,0,0,0.02)', padding: '16px', borderRadius: '16px' }}>
                   <div>
                     <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#34c759', marginBottom: '10px', textTransform: 'uppercase' }}>They give (You want):</div>
                     <div style={{ display: 'flex', gap: '5px', overflowX: 'auto', paddingBottom: '10px' }}>
@@ -508,7 +508,7 @@ const TradingCenter = ({ onRequestLogin }) => {
               <button className="ios-close-btn" onClick={closeChat}>
                 <X size={12} />
               </button>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, flexWrap: 'wrap' }}>
                 <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #0a84ff, #5ac8fa)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, position: 'relative' }}>
                   {chatUser.username.charAt(0).toUpperCase()}
                   <div style={{ position: 'absolute', bottom: -2, right: -2, width: 10, height: 10, borderRadius: '50%', background: isOnline(chatUser.lastActive) ? '#34c759' : '#8e8e93', border: '2px solid var(--bg-main)' }}></div>
