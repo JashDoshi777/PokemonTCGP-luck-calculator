@@ -1,0 +1,1 @@
+fetch('https://www.pokemon.com/us/pokemon-tcg/pokemon-cards/').then(r=>r.text()).then(t=>{ const matches = t.match(/<img[^>]*src=["']([^"']*energy[^"']*)["'][^>]*>/gi); console.log(matches); }).catch(console.error);
