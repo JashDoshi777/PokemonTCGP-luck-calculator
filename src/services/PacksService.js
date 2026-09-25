@@ -6,8 +6,23 @@ import { dataService } from './DataService';
 const PACK_ART_CDN = 'https://cdn.jsdelivr.net/gh/PocketDecks/pokemon-tcg-pocket-cards@main/images/webp/packs';
 const LOGO_CDN = 'https://assets.tcgdex.net/en/tcgp';
 
+// A handful of early (pre-Deluxe Pack) sets have multiple boosters and are
+// filed by the featured character's name instead of a generic "-booster"
+// suffix - these need an explicit filename rather than the standard pattern.
+const LEGACY_ART_SLUGS = {
+  A1: 'charizard',
+  A1a: 'mew',
+  A2: 'dialga',
+  A2a: 'arceus',
+  A3: 'lunala',
+  A4: 'ho-oh',
+  B1: 'megaaltaria',
+};
+
 export function packArtCandidates(code) {
+  const legacySlug = LEGACY_ART_SLUGS[code];
   return [
+    ...(legacySlug ? [`${PACK_ART_CDN}/${code.toLowerCase()}-${legacySlug}.webp`] : []),
     `${PACK_ART_CDN}/${code.toLowerCase()}-booster.webp`,
     `${LOGO_CDN}/${code}/logo.webp`,
   ];

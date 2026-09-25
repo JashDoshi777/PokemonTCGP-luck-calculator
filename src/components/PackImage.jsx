@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { packArtCandidates } from '../services/PacksService';
 
-// Renders a pack's box art, falling back through auto-fetched candidates
-// (community box art -> set logo) and finally a plain text tile if a set
-// isn't covered by any source yet. A locally-added /packs/*.jpg always wins.
+// Renders a pack's box art, preferring the live community box-art CDN (kept
+// current automatically) for every set, including the hand-curated ones -
+// falling back through auto-fetched candidates (set logo), then the locally
+// bundled /packs/*.jpg, and finally a plain text tile if nothing loads.
 export default function PackImage({ pack, style, alt }) {
   const fallbacks = pack.imgCandidates || (pack.code ? packArtCandidates(pack.code) : []);
-  const candidates = [...new Set([pack.img, ...fallbacks].filter(Boolean))];
+  const candidates = [...new Set([...fallbacks, pack.img].filter(Boolean))];
   const [index, setIndex] = useState(0);
 
   if (index >= candidates.length) {
