@@ -3,7 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import PokemonCard from '../components/PokemonCard';
 import AppleSearchBar from '../components/AppleSearchBar';
 import { ChevronLeft, ChevronRight, Filter, CheckCircle2, Sparkles, Hand, MousePointer2, Search, X } from 'lucide-react';
-import energyMapping from '../data/energy_mapping.json';
+import { getEnergyMap, staticEnergyMapping } from '../services/EnergyMapService';
 import './CollectionTracker.css';
 
 const AppleProgressRing = ({ percentage, size = 100, stroke  = 8 }) => {
@@ -55,7 +55,8 @@ const CollectionTracker = () => {
   const { cards, sets, collection, wishlist, toggleWishlist, updateCardCount, batchUpdateCollection, loading } = useAppContext();
   const [activeSet, setActiveSet] = useState('A1');
   const [rarityFilter, setRarityFilter] = useState('All');
-  const [energyFilter, setEnergyFilter] = useState('All');
+  const [energyFilters, setEnergyFilters] = useState([]);
+  const [energyMapping, setEnergyMapping] = useState(staticEnergyMapping);
   const [ownershipFilter, setOwnershipFilter] = useState('All');
   const [isDragging, setIsDragging] = useState(false);
   const [isPaintMode, setIsPaintMode] = useState(false);
@@ -64,6 +65,20 @@ const CollectionTracker = () => {
   const scrollRef = useRef(null);
   const lastMouseTime = useRef(0);
   const draggedCardsRef = useRef(new Set());
+
+  useEffect(() => {
+    getEnergyMap().then(setEnergyMapping);
+  }, []);
+
+  const toggleEnergyFilter = (type) => {
+    if (type === 'All') {
+      setEnergyFilters([]);
+      return;
+    }
+    setEnergyFilters(prev =>
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+    );
+  };
 
   useEffect(() => {
     const handleMouseUpGlobal = () => {
@@ -117,8 +132,8 @@ const CollectionTracker = () => {
     if (rarityFilter !== 'All') {
       filtered = filtered.filter(c => c.rarity === rarityFilter);
     }
-    if (energyFilter !== 'All') {
-      filtered = filtered.filter(c => energyMapping[c.name] === energyFilter);
+    if (energyFilters.length > 0) {
+      filtered = filtered.filter(c => energyFilters.includes(energyMapping[c.name]));
     }
     if (ownershipFilter === 'Owned') {
       filtered = filtered.filter(c => (collection[`${c.set}-${c.number}`] || 0) > 0);
@@ -126,7 +141,7 @@ const CollectionTracker = () => {
       filtered = filtered.filter(c => (collection[`${c.set}-${c.number}`] || 0) === 0);
     }
     return filtered;
-  }, [cards, fullSetCards, rarityFilter, energyFilter, ownershipFilter, collection, searchQuery]);
+  }, [cards, fullSetCards, rarityFilter, energyFilters, energyMapping, ownershipFilter, collection, searchQuery]);
 
   const uniqueRarities = useMemo(() => {
     if (fullSetCards.length === 0) return [];
@@ -276,7 +291,7 @@ const CollectionTracker = () => {
                   onClick={() => {
                     setActiveSet(set.code);
                     setRarityFilter('All');
-                    setEnergyFilter('All');
+                    setEnergyFilters([]);
                   }}
                 >
                   {set.name.en} ({set.code})
@@ -310,32 +325,35 @@ const CollectionTracker = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', fontSize: '0.95rem', fontWeight: 600, marginRight: '10px' }}>
                 Energy:
               </div>
-              {['All', 'Grass', 'Fire', 'Water', 'Lightning', 'Psychic', 'Fighting', 'Darkness', 'Metal', 'Colorless', 'Fairy', 'Dragon'].map(type => (
+              {['All', 'Grass', 'Fire', 'Water', 'Lightning', 'Psychic', 'Fighting', 'Darkness', 'Metal', 'Colorless', 'Fairy', 'Dragon'].map(type => {
+                const isActive = type === 'All' ? energyFilters.length === 0 : energyFilters.includes(type);
+                return (
                 <button
                   key={type}
-                  className={`energy-btn ${energyFilter === type ? 'active' : ''}`}
-                  onClick={() => setEnergyFilter(type)}
-                  style={{ 
+                  className={`energy-btn ${isActive ? 'active' : ''}`}
+                  onClick={() => toggleEnergyFilter(type)}
+                  style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     width: type === 'All' ? 'auto' : '38px',
                     height: type === 'All' ? 'auto' : '38px',
-                    padding: type === 'All' ? '6px 16px' : '0', 
-                    borderRadius: type === 'All' ? '20px' : '50%', 
-                    background: energyFilter === type ? 'rgba(255,255,255,0.1)' : 'transparent',
-                    border: type === 'All' 
-                      ? `1px solid ${energyFilter === type ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.05)'}`
+                    padding: type === 'All' ? '6px 16px' : '0',
+                    borderRadius: type === 'All' ? '20px' : '50%',
+                    background: isActive ? 'rgba(255,255,255,0.1)' : 'transparent',
+                    border: type === 'All'
+                      ? `1px solid ${isActive ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.05)'}`
                       : 'none',
-                    boxShadow: energyFilter === type && type !== 'All' ? '0 0 0 2px rgba(255,255,255,0.8), 0 6px 16px rgba(0,0,0,0.3)' : 'none',
-                    color: energyFilter === type ? 'var(--text-main)' : 'var(--text-muted)',
+                    boxShadow: isActive && type !== 'All' ? '0 0 0 2px rgba(255,255,255,0.8), 0 6px 16px rgba(0,0,0,0.3)' : 'none',
+                    color: isActive ? 'var(--text-main)' : 'var(--text-muted)',
                     cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)', fontWeight: 600, fontSize: '0.95rem',
-                    opacity: energyFilter !== 'All' && energyFilter !== type ? 0.4 : 1,
-                    transform: energyFilter === type && type !== 'All' ? 'scale(1.2)' : 'scale(1)'
+                    opacity: energyFilters.length > 0 && !isActive ? 0.4 : 1,
+                    transform: isActive && type !== 'All' ? 'scale(1.2)' : 'scale(1)'
                   }}
                   title={type}
                 >
                   {type === 'All' ? 'All' : <img src={`/icons/energy_${type}.png`} alt={type} style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' }} />}
                 </button>
-              ))}
+                );
+              })}
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
