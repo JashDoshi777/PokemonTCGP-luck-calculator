@@ -7,6 +7,7 @@ import { ReactLenis } from 'lenis/react';
 gsap.registerPlugin(ScrollTrigger);
 import { PACKS, RARITIES, ICONS } from './data';
 import { runLuckCalculation } from './math';
+import { getAllPacks } from './services/PacksService';
 
 import { AppProvider } from './context/AppContext';
 import MetaDecks from './pages/MetaDecks';
@@ -14,6 +15,7 @@ import DeckBuilder from './pages/DeckBuilder';
 import CollectionTracker from './pages/CollectionTracker';
 import TradingCenter from './pages/TradingCenter';
 import LoginModal from './components/LoginModal';
+import PackImage from './components/PackImage';
 import { useAppContext } from './context/AppContext';
 
 function AppContent() {
@@ -35,6 +37,11 @@ function AppContent() {
     return new Set([sessionStorage.getItem('pokemontcgp-view') || 'home']);
   });
   const [dexSelectedPack, setDexSelectedPack] = useState(null);
+  const [dexPacks, setDexPacks] = useState(PACKS);
+
+  useEffect(() => {
+    getAllPacks().then(setDexPacks).catch(() => setDexPacks(PACKS));
+  }, []);
 
   useEffect(() => {
     sessionStorage.setItem('pokemontcgp-view', view);
@@ -192,16 +199,16 @@ function AppContent() {
                 <div>
                   <h2 style={{ fontSize: 'min(3rem, 10vw)', fontWeight: 800, letterSpacing: '-0.04em' }} className="text-gradient">The Archives</h2>
                   <p style={{ color: 'var(--text-muted)', fontSize: '1.2rem', marginTop: '12px', fontWeight: 500, maxWidth: '600px' }}>
-                    Explore the explicit sub-rates and rules for all {PACKS.length} official Pokémon TCG Pocket expansions currently tracked by the engine.
+                    Explore the explicit sub-rates and rules for all {dexPacks.length} official Pokémon TCG Pocket expansions currently tracked by the engine.
                   </p>
                 </div>
               </div>
 
               <div className="archives-grid" style={{ display: 'grid', gap: '32px' }}>
-                {PACKS.map(p => (
+                {dexPacks.map(p => (
                   <div key={p.id} className="glass-card" style={{ padding: '32px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '24px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
-                      {p.img && <img src={p.img} alt={p.name} style={{ width: '100%', maxWidth: '200px', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.15)' }} />}
+                      <PackImage pack={p} style={{ width: '100%', maxWidth: '200px', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.15)' }} />
                       <div style={{ width: '100%', textAlign: 'center' }}>
                         <div style={{ fontWeight: 800, fontSize: '1.4rem', letterSpacing: '-0.04em', marginBottom: '8px' }}>{p.name}</div>
                         <div style={{ color: 'var(--text-muted)', fontSize: '1rem', fontWeight: 500 }}>Released: {p.date}</div>
@@ -229,7 +236,7 @@ function AppContent() {
                     </button>
                     
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                      {dexSelectedPack.img && <img src={dexSelectedPack.img} alt={dexSelectedPack.name} style={{ width: '60px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />}
+                      <PackImage pack={dexSelectedPack} style={{ width: '60px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
                       <div>
                         <h2 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.04em', margin: 0, color: 'var(--text-main)' }}>{dexSelectedPack.name}</h2>
                         <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginTop: '2px', fontWeight: 500 }}>Calculator Instance</p>

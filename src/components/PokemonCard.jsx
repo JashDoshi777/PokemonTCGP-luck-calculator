@@ -16,7 +16,9 @@ const PokemonCard = ({ card, count, isWishlisted, onToggleWishlist }) => {
   // The new flibustier API does not require zero padding
   
   const setCode = card.set || 'A1';
-  const imgUrl = `https://cdn.jsdelivr.net/gh/flibustier/pokemon-tcg-exchange@main/public/images/cards-by-set/${setCode}/${cardNumberStr}.webp`;
+  // card.image (from the main card DB) is a bare filename, not a usable URL - only
+  // card.artUrl (an explicit full URL some callers supply) should override the default.
+  const imgUrl = card.artUrl || `https://cdn.jsdelivr.net/gh/flibustier/pokemon-tcg-exchange@main/public/images/cards-by-set/${setCode}/${cardNumberStr}.webp`;
 
   return (
     <div className="pokemon-card-container">

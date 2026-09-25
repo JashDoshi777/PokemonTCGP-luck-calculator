@@ -36,6 +36,10 @@ class DataService {
     return this.fetchWithCache('rarities.json');
   }
 
+  async getPullRates() {
+    return this.fetchWithCache('pullRates.json');
+  }
+
   // Derived getters for convenience
   async getCardsBySet(setCode) {
     const cards = await this.getCards();

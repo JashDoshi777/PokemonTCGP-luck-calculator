@@ -1,49 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useAppContext } from '../context/AppContext';
-import { META_DECKS } from '../data/metaDecks';
+import { getLiveMetaDecks } from '../services/MetaDecksService';
 import PokemonCard from '../components/PokemonCard';
 import { X } from 'lucide-react';
 import './MetaDecks.css';
 
 const MetaDecks = () => {
-  const { cards, loading } = useAppContext();
+  const [metaDecks, setMetaDecks] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedDeck, setSelectedDeck] = useState(null);
 
-  const findFuzzyCard = (cardName) => {
-    if (!cards || cards.length === 0) return null;
-    
-    const normalize = (str) => str.toLowerCase().replace(/['’]/g, "'");
-    const normalizedTarget = normalize(cardName);
-    
-    let found = cards.find(c => normalize(c.name) === normalizedTarget);
-    if (found) return found;
-    
-    // Fallback: strip common prefixes/suffixes to find base Pokémon
-    const cleanName = normalizedTarget.replace(/mega | ex| v| vmax| vstar/gi, '').trim();
-    found = cards.find(c => normalize(c.name).includes(cleanName));
-    return found;
-  };
+  useEffect(() => {
+    getLiveMetaDecks()
+      .then(setMetaDecks)
+      .catch(() => setMetaDecks([]))
+      .finally(() => setLoading(false));
+  }, []);
 
-  const resolveDeckCards = (deckCards) => {
-    if (!cards || cards.length === 0) return [];
-    return deckCards.map(dc => {
-      const foundCard = findFuzzyCard(dc.name);
-      return {
-        card: foundCard || { name: dc.name, number: '999', set: 'CUSTOM' },
-        count: dc.count
-      };
-    });
-  };
+  // Live decks already carry exact name/set/number/image per card, so no
+  // fuzzy name-matching is needed here.
+  const resolveDeckCards = (deckCards) => deckCards.map(dc => ({ card: dc, count: dc.count }));
 
-  const getCardImage = (cardName) => {
-    const foundCard = findFuzzyCard(cardName);
-    if (!foundCard) return null; // If absolutely no matching image can be found
-    let cardNumberStr = foundCard.number ? foundCard.number.toString() : '1';
-    if (cardNumberStr.includes('/')) cardNumberStr = cardNumberStr.split('/')[0];
-    const setCode = foundCard.set || 'A1';
-    return `https://cdn.jsdelivr.net/gh/flibustier/pokemon-tcg-exchange@main/public/images/cards-by-set/${setCode}/${cardNumberStr}.webp`;
-  };
+  const getCardImage = (deck) => deck.cards[0]?.artUrl || null;
 
   const handleDeckClick = (deck) => {
     setSelectedDeck(deck);
@@ -71,8 +49,8 @@ const MetaDecks = () => {
         <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>Loading database...</div>
       ) : (
         <div className="decks-grid">
-          {META_DECKS.map((deck) => {
-            const mainImgUrl = getCardImage(deck.cards[0].name);
+          {metaDecks.map((deck) => {
+            const mainImgUrl = getCardImage(deck);
             return (
               <div key={deck.id} className="deck-grid-item" onClick={() => handleDeckClick(deck)}>
                 <div className="deck-item-header">
