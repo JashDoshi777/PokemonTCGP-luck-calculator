@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { ChevronRight } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -300,6 +301,7 @@ function Calculator({ mode, selectedPack, isModal }) {
     return saved ? JSON.parse(saved) : {};
   });
   const [results, setResults] = useState(null);
+  const [isLogCollapsed, setIsLogCollapsed] = useState(false);
 
   useEffect(() => {
     sessionStorage.setItem(`${storageKey}-packs`, packsOpened.toString());
@@ -320,13 +322,20 @@ function Calculator({ mode, selectedPack, isModal }) {
       return; 
     }
     setResults(runLuckCalculation(packsOpened, counts, mode, selectedPack, deluxePacksOpened));
-    
+
     if (!isAuto) {
-      setTimeout(() => {
-        if (resultsRef.current) {
-          resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 100);
+      // On wide (laptop+) screens, collapse the input panel into a rail so the
+      // results are fully visible without scrolling. Narrower screens already
+      // stack the panels full-width, so keep the old scroll-to-results behavior.
+      if (!isModal && window.innerWidth >= 900) {
+        setIsLogCollapsed(true);
+      } else {
+        setTimeout(() => {
+          if (resultsRef.current) {
+            resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 100);
+      }
     }
   };
 
@@ -336,9 +345,18 @@ function Calculator({ mode, selectedPack, isModal }) {
     }
   }, [packsOpened, deluxePacksOpened, counts, mode, selectedPack]);
 
+  const showCollapsedRail = !isModal && isLogCollapsed;
+
   return (
-    <div className={`layout-grid animate-enter ${isModal ? 'ios-mode' : ''}`}>
+    <div className={`layout-grid animate-enter ${isModal ? 'ios-mode' : ''} ${showCollapsedRail ? 'log-collapsed' : ''}`}>
       <div className={isModal ? "ios-section" : "glass-panel"}>
+        {showCollapsedRail ? (
+          <button className="trainers-log-rail" onClick={() => setIsLogCollapsed(false)} title="Expand Trainer's Log">
+            <span className="trainers-log-rail-label">Trainer's Log</span>
+            <ChevronRight size={18} />
+          </button>
+        ) : (
+        <>
         <h2 className={isModal ? "ios-section-header" : "text-gradient"} style={!isModal ? { fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: '40px' } : {}}>Trainer's Log</h2>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: isModal ? '16px' : '32px' }}>
@@ -419,6 +437,8 @@ function Calculator({ mode, selectedPack, isModal }) {
             Evaluate Pulls!
           </button>
         </div>
+        </>
+        )}
       </div>
 
       <div ref={resultsRef} className={isModal ? "ios-section" : "glass-panel sticky-panel"}>
