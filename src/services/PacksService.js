@@ -72,15 +72,22 @@ function detectGuaranteedEx(setRates) {
 
 // A dedicated low-odds booster type (distinct from the standard Regular/Rare
 // Pack variants) whose every slot guarantees a shiny rarity is a shiny-god-
-// pack mechanic.
+// pack mechanic. Returns that booster's own appearance rate (as a 0-1
+// probability, matching how GOD_RATE/SHINY_GOD_RATE are expressed) so a
+// future set with this mechanic at a different odds isn't silently scored
+// against Mega Shine's specific rate - or null if the set has no such booster.
 function detectShinyGodPack(setRates) {
-  if (!isSlotsObject(setRates)) return false;
+  if (!isSlotsObject(setRates)) return null;
   const standardNames = ['Regular Pack', 'Rare Pack', 'Regular Pack +1'];
-  return Object.entries(setRates).some(([name, booster]) => {
-    if (standardNames.includes(name) || !isSlotsObject(booster?.slots)) return false;
+  for (const [name, booster] of Object.entries(setRates)) {
+    if (standardNames.includes(name) || !isSlotsObject(booster?.slots)) continue;
     const slots = Object.values(booster.slots);
-    return slots.length > 0 && slots.every(slot => isGuaranteedSlot(slot, ['S', 'SSR']));
-  });
+    const isShinyGodPack = slots.length > 0 && slots.every(slot => isGuaranteedSlot(slot, ['S', 'SSR']));
+    if (isShinyGodPack && typeof booster.appearance_rate === 'number') {
+      return booster.appearance_rate / 100;
+    }
+  }
+  return null;
 }
 
 let cachedPacks = null;
@@ -109,7 +116,7 @@ export async function getAllPacks() {
         const setRates = pullRates?.[set.code];
         const { hasShiny, shinySlot6 } = detectShinyFlags(setRates);
         const guaranteedEx = detectGuaranteedEx(setRates);
-        const hasShinyGodPack = detectShinyGodPack(setRates);
+        const shinyGodPackRate = detectShinyGodPack(setRates);
 
         autoPacks.push({
           id: set.code.toLowerCase(),
@@ -120,7 +127,8 @@ export async function getAllPacks() {
           hasShiny,
           shinySlot6,
           guaranteedEx,
-          hasShinyGodPack,
+          hasShinyGodPack: shinyGodPackRate !== null,
+          shinyGodPackRate,
           packs: set.packs?.length || 1,
           img: packArtCandidates(set.code)[0],
           imgCandidates: packArtCandidates(set.code),

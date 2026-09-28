@@ -50,6 +50,14 @@ export const AppProvider = ({ children }) => {
           }
         };
 
+        // Guards against a malformed cloud response (e.g. a serialization bug
+        // returning something other than a {cardId: count} map) polluting the
+        // merged collection/wishlist with garbage keys.
+        const asPlainObject = (val, fallback) => {
+          if (val && typeof val === 'object' && !Array.isArray(val)) return val;
+          return fallback;
+        };
+
         setCollection(safeParse(localStorage.getItem('tcgp_collection'), {}));
         setWishlist(safeParse(localStorage.getItem('tcgp_wishlist'), {}));
         setCustomDecks(safeParse(localStorage.getItem('tcgp_decks'), []));
@@ -65,7 +73,7 @@ export const AppProvider = ({ children }) => {
 
               // Safely merge guest data with cloud data
               const localCollection = safeParse(localStorage.getItem('tcgp_collection'), {});
-              const mergedCollection = { ...localCollection, ...(data.collection || {}) };
+              const mergedCollection = { ...localCollection, ...asPlainObject(data.collection, {}) };
 
               if (Object.keys(mergedCollection).length > 0) {
                 setCollection(mergedCollection);
@@ -73,7 +81,7 @@ export const AppProvider = ({ children }) => {
               }
 
               const localWishlist = safeParse(localStorage.getItem('tcgp_wishlist'), {});
-              const mergedWishlist = { ...localWishlist, ...(data.wishlist || {}) };
+              const mergedWishlist = { ...localWishlist, ...asPlainObject(data.wishlist, {}) };
 
               if (Object.keys(mergedWishlist).length > 0) {
                 setWishlist(mergedWishlist);

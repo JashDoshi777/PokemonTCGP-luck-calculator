@@ -39,7 +39,12 @@ const authenticateToken = (req, res, next) => {
 // slows down naive automated credential-stuffing against a single instance.
 const authAttempts = new Map();
 const rateLimitAuth = (req, res, next) => {
-  const key = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+  // Behind Netlify's proxy req.ip/req.socket typically reflect an internal
+  // address rather than the real client, so prefer the forwarded header
+  // (its first entry is the original client) and only fall back to req.ip
+  // for local/direct-connection dev.
+  const forwardedFor = req.headers['x-forwarded-for'];
+  const key = (forwardedFor ? forwardedFor.split(',')[0].trim() : null) || req.ip || 'unknown';
   const now = Date.now();
   const windowMs = 60 * 1000;
   const maxAttempts = 10;
@@ -50,6 +55,15 @@ const rateLimitAuth = (req, res, next) => {
   }
   attempts.push(now);
   authAttempts.set(key, attempts);
+  next();
+};
+
+// A non-numeric :userId would otherwise hit a raw integer-column comparison
+// deep in a query and bubble up as an opaque 500 - reject it cleanly upfront.
+const validateUserIdParam = (req, res, next) => {
+  if (!/^\d+$/.test(req.params.userId)) {
+    return res.status(400).json({ error: "Invalid user id" });
+  }
   next();
 };
 
@@ -121,6 +135,20 @@ app.get('/api/init', async (req, res) => {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+    // A user should have at most one trade listing - the check-then-insert-or-update
+    // in POST /api/trade used to race under a double-submit and could leave
+    // duplicate rows, which the chat/endorsement relationship check silently
+    // assumed couldn't happen. Dedupe any existing duplicates (keep the most
+    // recently updated row) before enforcing the constraint going forward.
+    await pool.query(`
+      DELETE FROM trades t USING trades newer
+      WHERE t.user_id = newer.user_id AND t.updated_at < newer.updated_at;
+    `);
+    await pool.query(`
+      DELETE FROM trades t USING trades other
+      WHERE t.user_id = other.user_id AND t.id < other.id AND t.updated_at = other.updated_at;
+    `);
+    try { await pool.query(`ALTER TABLE trades ADD CONSTRAINT trades_user_id_unique UNIQUE (user_id);`); } catch (e) {}
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS messages (
@@ -299,18 +327,16 @@ app.get('/api/trade', authenticateToken, async (req, res) => {
 app.post('/api/trade', authenticateToken, async (req, res) => {
   try {
     const { offering_cards, requesting_cards } = req.body;
-    const check = await pool.query('SELECT id FROM trades WHERE user_id = $1', [req.user.id]);
-    if (check.rows.length > 0) {
-      await pool.query(
-        'UPDATE trades SET offering_cards = $1, requesting_cards = $2, updated_at = CURRENT_TIMESTAMP WHERE user_id = $3',
-        [JSON.stringify(offering_cards), JSON.stringify(requesting_cards), req.user.id]
-      );
-    } else {
-      await pool.query(
-        'INSERT INTO trades (user_id, offering_cards, requesting_cards) VALUES ($1, $2, $3)',
-        [req.user.id, JSON.stringify(offering_cards), JSON.stringify(requesting_cards)]
-      );
-    }
+    // Atomic upsert (relies on the unique constraint on trades.user_id from
+    // /api/init) instead of a check-then-insert-or-update, which could race
+    // under a double-submit and leave a user with two listing rows.
+    await pool.query(
+      `INSERT INTO trades (user_id, offering_cards, requesting_cards)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (user_id) DO UPDATE
+       SET offering_cards = $2, requesting_cards = $3, updated_at = CURRENT_TIMESTAMP`,
+      [req.user.id, JSON.stringify(offering_cards), JSON.stringify(requesting_cards)]
+    );
     res.json({ success: true });
   } catch (error) {
     console.error(error);
@@ -379,7 +405,7 @@ app.get('/api/trade/matches', authenticateToken, async (req, res) => {
 });
 
 // Chat Routes
-app.get('/api/chat/:userId', authenticateToken, async (req, res) => {
+app.get('/api/chat/:userId', authenticateToken, validateUserIdParam, async (req, res) => {
   try {
     const otherUserId = req.params.userId;
     if (!(await hasRelationship(req.user.id, otherUserId))) return res.sendStatus(403);
@@ -402,7 +428,7 @@ app.get('/api/chat/:userId', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/chat/:userId', authenticateToken, async (req, res) => {
+app.post('/api/chat/:userId', authenticateToken, validateUserIdParam, async (req, res) => {
   try {
     const receiverId = req.params.userId;
     const { content } = req.body;
@@ -438,7 +464,7 @@ app.get('/api/trade/notifications', authenticateToken, async (req, res) => {
 });
 
 // Endorse Trader
-app.post('/api/trade/endorse/:userId', authenticateToken, async (req, res) => {
+app.post('/api/trade/endorse/:userId', authenticateToken, validateUserIdParam, async (req, res) => {
   try {
     const endorsedId = req.params.userId;
     if (endorsedId == req.user.id) return res.status(400).json({ error: "Cannot endorse yourself" });

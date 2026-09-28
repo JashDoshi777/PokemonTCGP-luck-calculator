@@ -4,7 +4,14 @@ import PokemonCard from '../components/PokemonCard';
 import { Search, X, Check, MessageCircle, Heart, ArrowRightLeft, Bell, Star } from 'lucide-react';
 import './CollectionTracker.css'; // Reuse existing styles where possible
 
-const TradingCenter = ({ onRequestLogin }) => {
+// Card ids are "${set}-${number}" - split on the LAST hyphen, not the first,
+// since some set codes (e.g. promo sets) contain hyphens themselves.
+function parseCardId(id) {
+  const lastDash = id.lastIndexOf('-');
+  return { set: id.slice(0, lastDash), num: id.slice(lastDash + 1) };
+}
+
+const TradingCenter = ({ onRequestLogin, isActive = true }) => {
   const { user, cards, wishlist, token } = useAppContext();
   const [activeTab, setActiveTab] = useState('listing'); // 'listing' or 'matches'
   
@@ -35,22 +42,36 @@ const TradingCenter = ({ onRequestLogin }) => {
     if (user && token) {
       fetchUserData();
       fetchTradeListing();
-      
-      const fetchNotifications = async () => {
-        try {
-          const res = await fetch(`${API_URL}/trade/notifications`, { headers: { 'Authorization': `Bearer ${token}` } });
-          const data = await res.json();
-          setUnreadCount(data.unreadCount || 0);
-        } catch (e) {
-          console.error('fetchNotifications error:', e);
-        }
-      };
-      
-      fetchNotifications();
-      const notifInterval = setInterval(fetchNotifications, 10000);
-      return () => clearInterval(notifInterval);
     }
   }, [user, token]);
+
+  // Only poll for notifications while this tab is actually the visible one -
+  // the app keeps every page mounted (just hidden) on tab switch, so without
+  // this the poll would otherwise run forever in the background once visited.
+  useEffect(() => {
+    if (!(user && token && isActive)) return;
+
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch(`${API_URL}/trade/notifications`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        setUnreadCount(data.unreadCount || 0);
+      } catch (e) {
+        console.error('fetchNotifications error:', e);
+      }
+    };
+
+    fetchNotifications();
+    const notifInterval = setInterval(fetchNotifications, 10000);
+    return () => clearInterval(notifInterval);
+  }, [user, token, isActive]);
+
+  // Stop the chat poll (and close the modal) when navigating away from this tab.
+  useEffect(() => {
+    if (!isActive && chatUser) {
+      closeChat();
+    }
+  }, [isActive]);
 
   const fetchUserData = async () => {
     try {
@@ -283,7 +304,7 @@ const TradingCenter = ({ onRequestLogin }) => {
     return (
       <div className="collection-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '10px' }}>
         {cardIds.map(id => {
-          const [set, num] = id.split('-');
+          const { set, num } = parseCardId(id);
           const card = cards?.find(c => c.set === set && c.number.toString() === num);
           if (!card) return null;
           return (
@@ -426,7 +447,7 @@ const TradingCenter = ({ onRequestLogin }) => {
                     <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#34c759', marginBottom: '10px', textTransform: 'uppercase' }}>They give (You want):</div>
                     <div style={{ display: 'flex', gap: '5px', overflowX: 'auto', paddingBottom: '10px' }}>
                       {m.theyGiveIWant.map(id => {
-                        const [set, num] = id.split('-');
+                        const { set, num } = parseCardId(id);
                         const card = cards?.find(c => c.set === set && c.number.toString() === num);
                         return card ? <div key={id} style={{ width: 60, flexShrink: 0 }}><PokemonCard card={card} /></div> : null;
                       })}
@@ -436,7 +457,7 @@ const TradingCenter = ({ onRequestLogin }) => {
                     <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ff3b30', marginBottom: '10px', textTransform: 'uppercase' }}>They want (You give):</div>
                     <div style={{ display: 'flex', gap: '5px', overflowX: 'auto', paddingBottom: '10px' }}>
                       {m.iGiveTheyWant.map(id => {
-                        const [set, num] = id.split('-');
+                        const { set, num } = parseCardId(id);
                         const card = cards?.find(c => c.set === set && c.number.toString() === num);
                         return card ? <div key={id} style={{ width: 60, flexShrink: 0 }}><PokemonCard card={card} /></div> : null;
                       })}

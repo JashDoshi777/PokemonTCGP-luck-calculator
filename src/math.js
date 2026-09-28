@@ -80,13 +80,16 @@ export function runLuckCalculation(standardPacksInput, counts, mode, selectedPac
   let shinyGodPct = 1;
   
   if (selectedPack?.hasShinyGodPack) {
+    // Auto-detected sets carry their own measured rate; the hand-curated
+    // Mega Shine entry has none, so it falls back to its known constant.
+    const rate = selectedPack.shinyGodPackRate || SHINY_GOD_RATE;
     shinyGodCount = parseInt(counts.shinyGodPack) || 0;
-    shinyGodExp = N_std * SHINY_GOD_RATE;
+    shinyGodExp = N_std * rate;
     shinyGodZ = zSc(shinyGodExp, shinyGodCount);
     shinyGodPct = normCDF(shinyGodZ);
-    
+
     if (N_std > 0) {
-      const w = Math.max(1, Math.log(1 / SHINY_GOD_RATE));
+      const w = Math.max(1, Math.log(1 / rate));
       sum_wz += w * shinyGodZ;
       sum_ww += w * w;
     }

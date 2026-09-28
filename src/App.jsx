@@ -275,7 +275,7 @@ function AppContent() {
           {visitedViews.has('collection') && <CollectionTracker />}
         </div>
         <div style={{ display: view === 'trading' ? 'block' : 'none' }}>
-          {visitedViews.has('trading') && <TradingCenter onRequestLogin={() => setShowLoginModal(true)} />}
+          {visitedViews.has('trading') && <TradingCenter onRequestLogin={() => setShowLoginModal(true)} isActive={view === 'trading'} />}
         </div>
 
       </div>
