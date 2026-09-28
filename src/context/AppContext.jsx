@@ -39,14 +39,20 @@ export const AppProvider = ({ children }) => {
 
         setData({ cards: cards || [], sets: flatSets, rarities: rarities || [] });
         
-        const savedCollection = localStorage.getItem('tcgp_collection');
-        if (savedCollection) setCollection(JSON.parse(savedCollection));
-        
-        const savedWishlist = localStorage.getItem('tcgp_wishlist');
-        if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
-        
-        const savedDecks = localStorage.getItem('tcgp_decks');
-        if (savedDecks) setCustomDecks(JSON.parse(savedDecks));
+        const safeParse = (raw, fallback) => {
+          if (!raw) return fallback;
+          try {
+            const parsed = JSON.parse(raw);
+            return parsed ?? fallback;
+          } catch (e) {
+            console.error('Corrupted local storage value, resetting:', e);
+            return fallback;
+          }
+        };
+
+        setCollection(safeParse(localStorage.getItem('tcgp_collection'), {}));
+        setWishlist(safeParse(localStorage.getItem('tcgp_wishlist'), {}));
+        setCustomDecks(safeParse(localStorage.getItem('tcgp_decks'), []));
 
         // If logged in, fetch from cloud
         if (token) {
@@ -56,21 +62,19 @@ export const AppProvider = ({ children }) => {
             });
             if (res.ok) {
               const data = await res.json();
-              
+
               // Safely merge guest data with cloud data
-              const localCollectionStr = localStorage.getItem('tcgp_collection');
-              const localCollection = localCollectionStr ? JSON.parse(localCollectionStr) : {};
+              const localCollection = safeParse(localStorage.getItem('tcgp_collection'), {});
               const mergedCollection = { ...localCollection, ...(data.collection || {}) };
-              
+
               if (Object.keys(mergedCollection).length > 0) {
                 setCollection(mergedCollection);
                 localStorage.setItem('tcgp_collection', JSON.stringify(mergedCollection));
               }
 
-              const localWishlistStr = localStorage.getItem('tcgp_wishlist');
-              const localWishlist = localWishlistStr ? JSON.parse(localWishlistStr) : {};
+              const localWishlist = safeParse(localStorage.getItem('tcgp_wishlist'), {});
               const mergedWishlist = { ...localWishlist, ...(data.wishlist || {}) };
-              
+
               if (Object.keys(mergedWishlist).length > 0) {
                 setWishlist(mergedWishlist);
                 localStorage.setItem('tcgp_wishlist', JSON.stringify(mergedWishlist));
@@ -78,13 +82,12 @@ export const AppProvider = ({ children }) => {
 
               let parsedDecks = data.customDecks;
               if (typeof parsedDecks === 'string') {
-                try { parsedDecks = JSON.parse(parsedDecks); } catch(e) { parsedDecks = []; }
+                parsedDecks = safeParse(parsedDecks, []);
               }
               if (!Array.isArray(parsedDecks)) parsedDecks = [];
 
-              const localDecksStr = localStorage.getItem('tcgp_decks');
-              const localDecks = localDecksStr ? JSON.parse(localDecksStr) : [];
-              
+              const localDecks = safeParse(localStorage.getItem('tcgp_decks'), []);
+
               const deckMap = new Map();
               localDecks.forEach(d => { if (d && d.id) deckMap.set(d.id, d) });
               parsedDecks.forEach(d => { if (d && d.id) deckMap.set(d.id, d) });
@@ -94,12 +97,15 @@ export const AppProvider = ({ children }) => {
                 setCustomDecks(mergedDecks);
                 localStorage.setItem('tcgp_decks', JSON.stringify(mergedDecks));
               }
+            } else if (res.status === 401 || res.status === 403) {
+              // Token expired or invalid - drop it so the user isn't stuck silently logged in but unsynced.
+              logout();
             }
           } catch (e) {
             console.error("Failed to sync from cloud", e);
           }
         }
-        
+
       } catch (err) {
         setError(err.message);
       } finally {
@@ -115,7 +121,7 @@ export const AppProvider = ({ children }) => {
     if (!token || loading) return;
     const syncToCloud = async () => {
       try {
-        await fetch(`${API_URL}/sync`, {
+        const res = await fetch(`${API_URL}/sync`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -123,6 +129,9 @@ export const AppProvider = ({ children }) => {
           },
           body: JSON.stringify({ collection, wishlist, customDecks })
         });
+        if (res.status === 401 || res.status === 403) {
+          logout();
+        }
       } catch (e) {
         console.error("Failed to sync to cloud", e);
       }

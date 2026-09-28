@@ -6,23 +6,8 @@ import { dataService } from './DataService';
 const PACK_ART_CDN = 'https://cdn.jsdelivr.net/gh/PocketDecks/pokemon-tcg-pocket-cards@main/images/webp/packs';
 const LOGO_CDN = 'https://assets.tcgdex.net/en/tcgp';
 
-// A handful of early (pre-Deluxe Pack) sets have multiple boosters and are
-// filed by the featured character's name instead of a generic "-booster"
-// suffix - these need an explicit filename rather than the standard pattern.
-const LEGACY_ART_SLUGS = {
-  A1: 'charizard',
-  A1a: 'mew',
-  A2: 'dialga',
-  A2a: 'arceus',
-  A3: 'lunala',
-  A4: 'ho-oh',
-  B1: 'megaaltaria',
-};
-
 export function packArtCandidates(code) {
-  const legacySlug = LEGACY_ART_SLUGS[code];
   return [
-    ...(legacySlug ? [`${PACK_ART_CDN}/${code.toLowerCase()}-${legacySlug}.webp`] : []),
     `${PACK_ART_CDN}/${code.toLowerCase()}-booster.webp`,
     `${LOGO_CDN}/${code}/logo.webp`,
   ];
@@ -33,27 +18,69 @@ function formatReleaseDate(isoDate) {
   return d.toLocaleString('en-US', { month: 'short', year: 'numeric' });
 }
 
+function isSlotsObject(slots) {
+  return !!slots && typeof slots === 'object' && !Array.isArray(slots);
+}
+
 function slotsHaveAny(slots, keys) {
-  if (!slots) return false;
-  return Object.values(slots).some(slot => keys.some(k => k in slot));
+  if (!isSlotsObject(slots)) return false;
+  return Object.values(slots).some(slot => isSlotsObject(slot) && keys.some(k => k in slot));
+}
+
+// A slot that resolves to a single rarity 100% of the time is a guaranteed
+// hit - used to detect guaranteed-ex packs (Deluxe Pack ex-style) and
+// dedicated shiny-god-pack booster types (Mega Shine-style) without relying
+// on a hardcoded set id, so future sets reusing these mechanics still work
+// before anyone manually curates them into data.js.
+function isGuaranteedSlot(slot, keys) {
+  if (!isSlotsObject(slot)) return false;
+  const entries = Object.entries(slot);
+  return entries.length === 1 && keys.includes(entries[0][0]) && entries[0][1] >= 99.9;
 }
 
 function detectShinyFlags(setRates) {
-  if (!setRates) return { hasShiny: false, shinySlot6: false };
+  if (!isSlotsObject(setRates)) return { hasShiny: false, shinySlot6: false };
 
   const shinyKeys = ['S', 'SSR'];
-  const hasShiny = Object.values(setRates).some(booster => slotsHaveAny(booster.slots, shinyKeys));
+  const boosters = Object.values(setRates).filter(b => isSlotsObject(b?.slots));
+  const hasShiny = boosters.some(booster => slotsHaveAny(booster.slots, shinyKeys));
 
   const bonusBooster = setRates['Regular Pack +1'];
   let shinySlot6 = false;
-  if (bonusBooster?.slots) {
-    const slotNumbers = Object.keys(bonusBooster.slots).map(Number);
-    const lastSlotKey = String(Math.max(...slotNumbers));
-    const lastSlot = bonusBooster.slots[lastSlotKey];
-    shinySlot6 = lastSlot && Object.keys(lastSlot).every(k => shinyKeys.includes(k));
+  if (isSlotsObject(bonusBooster?.slots)) {
+    const slotNumbers = Object.keys(bonusBooster.slots).map(Number).filter(Number.isFinite);
+    if (slotNumbers.length > 0) {
+      const lastSlotKey = String(Math.max(...slotNumbers));
+      const lastSlot = bonusBooster.slots[lastSlotKey];
+      shinySlot6 = isSlotsObject(lastSlot) && Object.keys(lastSlot).every(k => shinyKeys.includes(k));
+    }
   }
 
   return { hasShiny, shinySlot6 };
+}
+
+// The "main" booster is whichever one appears most often - guaranteed-ex
+// packs put their guaranteed 4-diamond-ex slot in this booster.
+function detectGuaranteedEx(setRates) {
+  if (!isSlotsObject(setRates)) return false;
+  const boosters = Object.values(setRates).filter(b => isSlotsObject(b?.slots));
+  if (boosters.length === 0) return false;
+  const mainBooster = boosters.reduce((best, b) =>
+    (b.appearance_rate || 0) > (best.appearance_rate || 0) ? b : best, boosters[0]);
+  return Object.values(mainBooster.slots).some(slot => isGuaranteedSlot(slot, ['RR']));
+}
+
+// A dedicated low-odds booster type (distinct from the standard Regular/Rare
+// Pack variants) whose every slot guarantees a shiny rarity is a shiny-god-
+// pack mechanic.
+function detectShinyGodPack(setRates) {
+  if (!isSlotsObject(setRates)) return false;
+  const standardNames = ['Regular Pack', 'Rare Pack', 'Regular Pack +1'];
+  return Object.entries(setRates).some(([name, booster]) => {
+    if (standardNames.includes(name) || !isSlotsObject(booster?.slots)) return false;
+    const slots = Object.values(booster.slots);
+    return slots.length > 0 && slots.every(slot => isGuaranteedSlot(slot, ['S', 'SSR']));
+  });
 }
 
 let cachedPacks = null;
@@ -72,27 +99,36 @@ export async function getAllPacks() {
   ]);
 
   const autoPacks = [];
-  if (sets) {
-    const allSets = [...(sets.A || []), ...(sets.B || [])];
+  if (sets && typeof sets === 'object') {
+    const allSets = Object.values(sets).flat();
     for (const set of allSets) {
-      if (!set.code || knownCodes.has(set.code)) continue;
+      if (!set?.code || knownCodes.has(set.code)) continue;
       if (set.code.startsWith('PROMO')) continue;
 
-      const { hasShiny, shinySlot6 } = detectShinyFlags(pullRates?.[set.code]);
+      try {
+        const setRates = pullRates?.[set.code];
+        const { hasShiny, shinySlot6 } = detectShinyFlags(setRates);
+        const guaranteedEx = detectGuaranteedEx(setRates);
+        const hasShinyGodPack = detectShinyGodPack(setRates);
 
-      autoPacks.push({
-        id: set.code.toLowerCase(),
-        code: set.code,
-        name: set.name?.en || set.code,
-        date: formatReleaseDate(set.releaseDate),
-        releaseDate: set.releaseDate,
-        hasShiny,
-        shinySlot6,
-        packs: set.packs?.length || 1,
-        img: packArtCandidates(set.code)[0],
-        imgCandidates: packArtCandidates(set.code),
-        auto: true,
-      });
+        autoPacks.push({
+          id: set.code.toLowerCase(),
+          code: set.code,
+          name: set.name?.en || set.code,
+          date: formatReleaseDate(set.releaseDate),
+          releaseDate: set.releaseDate,
+          hasShiny,
+          shinySlot6,
+          guaranteedEx,
+          hasShinyGodPack,
+          packs: set.packs?.length || 1,
+          img: packArtCandidates(set.code)[0],
+          imgCandidates: packArtCandidates(set.code),
+          auto: true,
+        });
+      } catch (e) {
+        console.error(`Skipping auto-pack for ${set.code} due to malformed pull-rate data:`, e);
+      }
     }
   }
 

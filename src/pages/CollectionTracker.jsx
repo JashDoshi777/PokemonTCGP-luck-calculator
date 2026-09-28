@@ -458,10 +458,13 @@ const CollectionTracker = () => {
                   if (element) {
                     const wrapper = element.closest('.collection-card-wrapper');
                     if (wrapper && wrapper.id) {
-                      const idParts = wrapper.id.replace('card-', '').split('-');
-                      if (idParts.length >= 2) {
-                        const set = idParts[0];
-                        const num = idParts[1];
+                      // Split on the LAST hyphen, not the first - some set codes
+                      // (e.g. promo sets) contain hyphens themselves.
+                      const idWithoutPrefix = wrapper.id.replace('card-', '');
+                      const lastDash = idWithoutPrefix.lastIndexOf('-');
+                      if (lastDash > 0) {
+                        const set = idWithoutPrefix.slice(0, lastDash);
+                        const num = idWithoutPrefix.slice(lastDash + 1);
                         const targetId = `${set}-${num}`;
                         const hoveredCard = activeSetCards.find(c => c.set === set && c.number.toString() === num);
                         if (hoveredCard && !draggedCardsRef.current.has(targetId)) {

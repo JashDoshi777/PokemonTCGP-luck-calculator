@@ -19,6 +19,17 @@ import LoginModal from './components/LoginModal';
 import PackImage from './components/PackImage';
 import { useAppContext } from './context/AppContext';
 
+function safeJSONParse(raw, fallback) {
+  if (!raw) return fallback;
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed ?? fallback;
+  } catch (e) {
+    console.error('Corrupted stored value, resetting:', e);
+    return fallback;
+  }
+}
+
 function AppContent() {
   const { user, logout } = useAppContext();
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -31,8 +42,7 @@ function AppContent() {
     return sessionStorage.getItem('pokemontcgp-view') || 'home';
   });
   const [history, setHistory] = useState(() => {
-    const saved = sessionStorage.getItem('pokemontcgp-history');
-    return saved ? JSON.parse(saved) : [];
+    return safeJSONParse(sessionStorage.getItem('pokemontcgp-history'), []);
   });
   const [visitedViews, setVisitedViews] = useState(() => {
     return new Set([sessionStorage.getItem('pokemontcgp-view') || 'home']);
@@ -289,16 +299,15 @@ function Calculator({ mode, selectedPack, isModal }) {
   const storageKey = `pokemontcgp-calc-${mode}-${selectedPack?.id || 'overall'}`;
   
   const [packsOpened, setPacksOpened] = useState(() => {
-    const saved = sessionStorage.getItem(`${storageKey}-packs`);
-    return saved ? parseInt(saved) : 0;
+    const saved = parseInt(sessionStorage.getItem(`${storageKey}-packs`));
+    return Number.isFinite(saved) ? saved : 0;
   });
   const [deluxePacksOpened, setDeluxePacksOpened] = useState(() => {
-    const saved = sessionStorage.getItem(`${storageKey}-deluxePacks`);
-    return saved ? parseInt(saved) : 0;
+    const saved = parseInt(sessionStorage.getItem(`${storageKey}-deluxePacks`));
+    return Number.isFinite(saved) ? saved : 0;
   });
   const [counts, setCounts] = useState(() => {
-    const saved = sessionStorage.getItem(`${storageKey}-counts`);
-    return saved ? JSON.parse(saved) : {};
+    return safeJSONParse(sessionStorage.getItem(`${storageKey}-counts`), {});
   });
   const [results, setResults] = useState(null);
   const [isLogCollapsed, setIsLogCollapsed] = useState(false);
@@ -387,7 +396,7 @@ function Calculator({ mode, selectedPack, isModal }) {
           )}
 
           <div className={isModal ? "" : "rarity-grid"} style={isModal ? { display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' } : { marginTop: '20px' }}>
-            {!(mode === 'perset' && selectedPack?.id === 'deluxe') && (
+            {!(mode === 'perset' && selectedPack?.guaranteedEx) && (
               <div className={isModal ? "ios-card" : "glass-card"} style={!isModal ? { padding: '24px 10px', display: 'flex', flexDirection: 'column', height: '100%' } : { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', gap: '16px', width: '100%' }}>
                 <div style={isModal ? { display: 'flex', alignItems: 'center', gap: '16px' } : { display: 'contents' }}>
                   <div dangerouslySetInnerHTML={{ __html: ICONS.god }} style={{ height: isModal ? '24px' : '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: isModal ? 'scale(1.2)' : 'scale(1.5)' }} />
@@ -401,7 +410,7 @@ function Calculator({ mode, selectedPack, isModal }) {
               </div>
             )}
 
-            {mode === 'perset' && selectedPack?.id === 'megashine' && (
+            {mode === 'perset' && selectedPack?.hasShinyGodPack && (
               <div className={isModal ? "ios-card" : "glass-card"} style={!isModal ? { padding: '24px 10px', display: 'flex', flexDirection: 'column', height: '100%' } : { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', gap: '16px', width: '100%' }}>
                 <div style={isModal ? { display: 'flex', alignItems: 'center', gap: '16px' } : { display: 'contents' }}>
                   <div dangerouslySetInnerHTML={{ __html: ICONS.god }} style={{ height: isModal ? '24px' : '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: isModal ? 'scale(1.2)' : 'scale(1.5)', filter: 'hue-rotate(180deg)' }} />

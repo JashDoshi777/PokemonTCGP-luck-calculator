@@ -1,6 +1,10 @@
 // Live meta tier-list, sourced from PocketDecks' community-run data pipeline
 // (refreshed from real match data roughly daily) instead of a hand-maintained list.
 const DECKS_URL = 'https://cdn.jsdelivr.net/gh/PocketDecks/pokemon-tcg-pocket-tier-list@main/public/data/best-decks.json';
+// Pinned to a major version (jsdelivr resolves "@5" to the newest 5.x.x release, so
+// this still tracks new sets) rather than "@latest", so an eventual major schema bump
+// upstream can't silently break this URL's path. resolveDeck() below is defensive
+// against a handful of individually-missing cards regardless.
 const CARDS_URL = 'https://cdn.jsdelivr.net/npm/pokemon-tcg-pocket-cards@5/data/v5/cards.core.min.json';
 // The card DB's own `image` field points at raw.githubusercontent.com, which is not meant
 // for hotlinking at volume and can hang/502 under load. jsdelivr mirrors the same repo
@@ -30,7 +34,8 @@ function resolveDeck(deck, cardsById) {
   const list = bestList(deck);
   if (!list) return null;
 
-  const resolvedCards = list.cards.map(parseCardRef).map(({ count, id }) => {
+  const cardRefs = list.cards.map(parseCardRef);
+  const resolvedCards = cardRefs.map(({ count, id }) => {
     const c = cardsById.get(id);
     if (!c) return null;
     const [setCode, number] = id.split('-');
@@ -44,9 +49,12 @@ function resolveDeck(deck, cardsById) {
       points: c.points || 0,
       isPokemon: c.type === 'Pokémon',
     };
-  });
+  }).filter(Boolean);
 
-  if (resolvedCards.some(c => !c)) return null; // skip decks we can't fully resolve
+  // Tolerate a card DB that's briefly behind the (more frequently updated) tier
+  // list - drop the handful of unresolved cards rather than discarding the whole
+  // deck, but bail if too much of it failed to resolve to show something sane.
+  if (resolvedCards.length === 0 || resolvedCards.length < cardRefs.length * 0.7) return null;
 
   const pokemonCards = resolvedCards.filter(c => c.isPokemon);
   const mainAttacker = pokemonCards
@@ -83,7 +91,12 @@ export async function getLiveMetaDecks() {
   if (cachedDecks) return cachedDecks;
 
   const [rawDecks, rawCards] = await Promise.all([fetchJson(DECKS_URL), fetchJson(CARDS_URL)]);
-  const cardsById = new Map(rawCards.map(c => [c.id, c]));
+  // Keep the first entry deterministically if the upstream DB ever has a
+  // duplicate id, rather than silently letting a later one overwrite it.
+  const cardsById = new Map();
+  for (const c of rawCards) {
+    if (!cardsById.has(c.id)) cardsById.set(c.id, c);
+  }
 
   const resolved = rawDecks.map(d => resolveDeck(d, cardsById)).filter(Boolean);
 

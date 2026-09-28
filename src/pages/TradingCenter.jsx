@@ -173,6 +173,7 @@ const TradingCenter = ({ onRequestLogin }) => {
 
   // --- CHAT LOGIC ---
   const startChat = (match) => {
+    if (chatPollRef.current) clearInterval(chatPollRef.current);
     setChatUser(match);
     fetchMessages(match.userId);
     chatPollRef.current = setInterval(() => {

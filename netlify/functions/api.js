@@ -34,8 +34,58 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Initialize Tables
+// Basic in-memory brute-force guard for auth routes. Not durable across cold
+// starts/instances in a real serverless deployment, but still meaningfully
+// slows down naive automated credential-stuffing against a single instance.
+const authAttempts = new Map();
+const rateLimitAuth = (req, res, next) => {
+  const key = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+  const now = Date.now();
+  const windowMs = 60 * 1000;
+  const maxAttempts = 10;
+
+  const attempts = (authAttempts.get(key) || []).filter(t => now - t < windowMs);
+  if (attempts.length >= maxAttempts) {
+    return res.status(429).json({ error: "Too many attempts, please try again shortly" });
+  }
+  attempts.push(now);
+  authAttempts.set(key, attempts);
+  next();
+};
+
+// Two users may message/endorse each other if they've already exchanged a
+// message, or if their trade listings are a mutual match (each offers what
+// the other requests) - without this, any logged-in user could message or
+// endorse any other user id directly, bypassing the match flow entirely.
+const hasRelationship = async (userIdA, userIdB) => {
+  const existingMessages = await pool.query(
+    `SELECT 1 FROM messages WHERE (sender_id = $1 AND receiver_id = $2) OR (sender_id = $2 AND receiver_id = $1) LIMIT 1`,
+    [userIdA, userIdB]
+  );
+  if (existingMessages.rows.length > 0) return true;
+
+  const trades = await pool.query(
+    `SELECT t1.offering_cards AS a_offer, t1.requesting_cards AS a_request,
+            t2.offering_cards AS b_offer, t2.requesting_cards AS b_request
+     FROM trades t1, trades t2
+     WHERE t1.user_id = $1 AND t2.user_id = $2`,
+    [userIdA, userIdB]
+  );
+  if (trades.rows.length === 0) return false;
+
+  const { a_offer, a_request, b_offer, b_request } = trades.rows[0];
+  const bGivesAWants = (b_offer || []).some(c => (a_request || []).includes(c));
+  const aGivesBWants = (a_offer || []).some(c => (b_request || []).includes(c));
+  return bGivesAWants && aGivesBWants;
+};
+
+// Initialize Tables - gated by a shared secret since this runs before any user
+// account exists (so it can't require a login token like every other route).
 app.get('/api/init', async (req, res) => {
+  const providedSecret = req.headers['x-admin-secret'];
+  if (!process.env.ADMIN_SECRET || providedSecret !== process.env.ADMIN_SECRET) {
+    return res.sendStatus(403);
+  }
   try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
@@ -96,12 +146,13 @@ app.get('/api/init', async (req, res) => {
 
     res.json({ message: "Database initialized successfully" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
 // Auth Routes
-app.post('/api/register', async (req, res) => {
+app.post('/api/register', rateLimitAuth, async (req, res) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: "Missing fields" });
@@ -115,17 +166,18 @@ app.post('/api/register', async (req, res) => {
     const user = result.rows[0];
     await pool.query('INSERT INTO user_data (user_id) VALUES ($1)', [user.id]);
 
-    const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET);
+    const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, { expiresIn: '30d' });
     res.json({ token, username: user.username });
   } catch (error) {
     if (error.code === '23505') {
       return res.status(400).json({ error: "Username already exists" });
     }
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', rateLimitAuth, async (req, res) => {
   try {
     const { username, password } = req.body;
     const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
@@ -137,10 +189,11 @@ app.post('/api/login', async (req, res) => {
     
     if (!validPassword) return res.status(401).json({ error: "Invalid credentials" });
 
-    const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET);
+    const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, { expiresIn: '30d' });
     res.json({ token, username: user.username });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -159,7 +212,8 @@ app.get('/api/sync', authenticateToken, async (req, res) => {
       res.json({ collection: {}, wishlist: {}, customDecks: [] });
     }
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -206,7 +260,8 @@ app.post('/api/sync', authenticateToken, async (req, res) => {
 
     res.json({ success: true });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -218,7 +273,8 @@ app.get('/api/user', authenticateToken, async (req, res) => {
     const successfulTrades = result.rows.length > 0 ? (result.rows[0].successful_trades || 0) : 0;
     res.json({ inGameId, successfulTrades });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -234,7 +290,8 @@ app.get('/api/trade', authenticateToken, async (req, res) => {
       res.json({ offering_cards: [], requesting_cards: [] });
     }
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -256,7 +313,8 @@ app.post('/api/trade', authenticateToken, async (req, res) => {
     }
     res.json({ success: true });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -315,7 +373,8 @@ app.get('/api/trade/matches', authenticateToken, async (req, res) => {
 
     res.json(formattedMatches);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -323,6 +382,7 @@ app.get('/api/trade/matches', authenticateToken, async (req, res) => {
 app.get('/api/chat/:userId', authenticateToken, async (req, res) => {
   try {
     const otherUserId = req.params.userId;
+    if (!(await hasRelationship(req.user.id, otherUserId))) return res.sendStatus(403);
     // Mark messages as read in the background
     pool.query(`UPDATE messages SET is_read = TRUE WHERE receiver_id = $1 AND sender_id = $2 AND is_read = FALSE`, [req.user.id, otherUserId]).catch(console.error);
 
@@ -337,7 +397,8 @@ app.get('/api/chat/:userId', authenticateToken, async (req, res) => {
     
     res.json(result.rows);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -345,10 +406,12 @@ app.post('/api/chat/:userId', authenticateToken, async (req, res) => {
   try {
     const receiverId = req.params.userId;
     const { content } = req.body;
-    
+
     if (!content || !content.trim()) {
       return res.status(400).json({ error: "Message content cannot be empty" });
     }
+
+    if (!(await hasRelationship(req.user.id, receiverId))) return res.sendStatus(403);
 
     const result = await pool.query(`
       INSERT INTO messages (sender_id, receiver_id, content) 
@@ -358,7 +421,8 @@ app.post('/api/chat/:userId', authenticateToken, async (req, res) => {
     
     res.json(result.rows[0]);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -368,7 +432,8 @@ app.get('/api/trade/notifications', authenticateToken, async (req, res) => {
     const result = await pool.query('SELECT COUNT(DISTINCT sender_id) as unread FROM messages WHERE receiver_id = $1 AND is_read = FALSE', [req.user.id]);
     res.json({ unreadCount: parseInt(result.rows[0].unread, 10) });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -377,6 +442,9 @@ app.post('/api/trade/endorse/:userId', authenticateToken, async (req, res) => {
   try {
     const endorsedId = req.params.userId;
     if (endorsedId == req.user.id) return res.status(400).json({ error: "Cannot endorse yourself" });
+    if (!(await hasRelationship(req.user.id, endorsedId))) {
+      return res.status(403).json({ error: "You can only endorse a trader you've matched or chatted with" });
+    }
 
     // Try to insert endorsement
     const insertResult = await pool.query(`
@@ -392,7 +460,8 @@ app.post('/api/trade/endorse/:userId', authenticateToken, async (req, res) => {
       res.status(400).json({ error: "Already endorsed this user" });
     }
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 

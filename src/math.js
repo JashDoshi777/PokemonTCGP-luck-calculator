@@ -8,7 +8,7 @@ export function getShinyRate(key, pack) {
 }
 
 export function getEffectiveRate(rarityKey, pack) {
-  if (pack && pack.id === 'deluxe') {
+  if (pack && pack.guaranteedEx) {
     return DELUXE_RATES[rarityKey] || 0;
   }
   
@@ -60,8 +60,8 @@ export function runLuckCalculation(standardPacksInput, counts, mode, selectedPac
   const isSlot6Context = mode === 'perset' && selectedPack.shinySlot6;
 
   const godCount = parseInt(counts.godPack) || 0;
-  // Deluxe packs don't drop God packs.
-  const stdNForGod = mode === 'overall' ? N_std : (selectedPack?.id === 'deluxe' ? 0 : N_std);
+  // Guaranteed-ex packs (e.g. Deluxe Pack ex) don't drop God packs.
+  const stdNForGod = mode === 'overall' ? N_std : (selectedPack?.guaranteedEx ? 0 : N_std);
   const godExp = stdNForGod * GOD_RATE;
   const godZ = zSc(godExp, godCount);
 
@@ -79,7 +79,7 @@ export function runLuckCalculation(standardPacksInput, counts, mode, selectedPac
   let shinyGodZ = 0;
   let shinyGodPct = 1;
   
-  if (selectedPack?.id === 'megashine') {
+  if (selectedPack?.hasShinyGodPack) {
     shinyGodCount = parseInt(counts.shinyGodPack) || 0;
     shinyGodExp = N_std * SHINY_GOD_RATE;
     shinyGodZ = zSc(shinyGodExp, shinyGodCount);
