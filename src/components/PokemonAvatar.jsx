@@ -11,7 +11,7 @@ const PokemonAvatar = ({ avatar, name = '', size = 40, className = '' }) => {
 
   useEffect(() => { setFailed(false); }, [avatar?.pokemon]);
 
-  const src = valid ? (size > 72 ? artworkUrl(avatar.pokemon) : spriteUrl(avatar.pokemon)) : null;
+  const src = valid ? (size >= 48 ? artworkUrl(avatar.pokemon) : spriteUrl(avatar.pokemon)) : null;
   const showImage = valid && !failed;
 
   return (

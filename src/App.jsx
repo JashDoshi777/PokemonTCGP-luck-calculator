@@ -201,7 +201,7 @@ function AppContent() {
                 title={`${user} — your profile`}
                 aria-label="Open your profile"
               >
-                <PokemonAvatar avatar={profile?.avatar} name={user} size={36} />
+                <PokemonAvatar avatar={profile?.avatar} name={user} size={50} />
               </button>
               <button className="nav-pill" onClick={() => { logout(); setIsMobileMenuOpen(false); }} style={{ background: 'rgba(255, 59, 48, 0.1)', color: '#ff3b30' }}>
                 Sign Out
