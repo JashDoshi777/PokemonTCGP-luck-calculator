@@ -135,8 +135,8 @@ const optionalAuth = (req, res, next) => {
 // Admins are identified server-side by username (from the signed JWT) against
 // the ADMIN_USERNAMES env var - never by anything the client sends. Fails
 // closed if the env var isn't set. Usernames are unique case-insensitively
-// (see users_username_lower_unique), so "JASHDOSHI" can never be a second
-// account that matches the admin "jashdoshi".
+// (see users_username_lower_unique), so a different-capitalisation copy of an
+// admin's name can never be registered as a second account.
 const adminNames = () => (process.env.ADMIN_USERNAMES || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
 const isAdminUser = (user) => !!user?.username && adminNames().includes(user.username.toLowerCase());
 
