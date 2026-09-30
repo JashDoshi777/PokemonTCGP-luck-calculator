@@ -1,4 +1,4 @@
-.meta-decks-page {
+﻿.meta-decks-page {
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -42,9 +42,7 @@
   position: relative;
   overflow: hidden;
   border-radius: 32px;
-  background: rgba(255, 255, 255, 0.9); /* Cleaner white frosted glass */
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.94);
   border: 1px solid rgba(255, 255, 255, 0.8);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 1);
 }

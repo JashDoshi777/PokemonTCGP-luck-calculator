@@ -1,9 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import { ChevronRight } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ReactLenis } from 'lenis/react';
+import { ReactLenis, useLenis } from 'lenis/react';
 
 gsap.registerPlugin(ScrollTrigger);
 import { PACKS, RARITIES, ICONS } from './data';
@@ -18,6 +18,8 @@ import TradingCenter from './pages/TradingCenter';
 import LoginModal from './components/LoginModal';
 import ProModal from './components/ProModal';
 import PackImage from './components/PackImage';
+import PokemonAvatar from './components/PokemonAvatar';
+import ProfilePage from './pages/ProfilePage';
 import { useAppContext } from './context/AppContext';
 
 function safeJSONParse(raw, fallback) {
@@ -31,8 +33,20 @@ function safeJSONParse(raw, fallback) {
   }
 }
 
+// Let any element that can scroll on its own (modals, inner lists) keep the
+// native wheel instead of Lenis hijacking it for the page behind.
+const canScrollInside = (node) => {
+  for (let el = node; el && el !== document.body && el !== document.documentElement; el = el.parentElement) {
+    if (el.nodeType !== 1) continue;
+    const oy = getComputedStyle(el).overflowY;
+    if ((oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight + 1) return true;
+  }
+  return false;
+};
+
+const LENIS_OPTIONS = { lerp: 0.1, smoothWheel: true, wheelMultiplier: 1, touchMultiplier: 1.5, prevent: canScrollInside };
 function AppContent() {
-  const { user, logout } = useAppContext();
+  const { user, logout, profile } = useAppContext();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showProModal, setShowProModal] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -122,7 +136,7 @@ function AppContent() {
 
   return (
     <>
-      <div className="ambient-background">
+      <div className={`ambient-background ${view === 'home' ? '' : 'is-still'}`}>
         <div className="ambient-blob blob-1"></div>
         <div className="ambient-blob blob-2"></div>
         <div className="ambient-blob blob-3"></div>
@@ -181,7 +195,14 @@ function AppContent() {
         <div className="auth-section" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-muted)' }}>{user}</span>
+              <button
+                className={`nav-avatar-btn ${view === 'profile' ? 'active' : ''}`}
+                onClick={() => handleSetView('profile')}
+                title={`${user} — your profile`}
+                aria-label="Open your profile"
+              >
+                <PokemonAvatar avatar={profile?.avatar} name={user} size={36} />
+              </button>
               <button className="nav-pill" onClick={() => { logout(); setIsMobileMenuOpen(false); }} style={{ background: 'rgba(255, 59, 48, 0.1)', color: '#ff3b30' }}>
                 Sign Out
               </button>
@@ -281,7 +302,10 @@ function AppContent() {
           {visitedViews.has('collection') && <CollectionTracker />}
         </div>
         <div style={{ display: view === 'trading' ? 'block' : 'none' }}>
-          {visitedViews.has('trading') && <TradingCenter onRequestLogin={() => setShowLoginModal(true)} isActive={view === 'trading'} />}
+          {visitedViews.has('trading') && <TradingCenter onRequestLogin={() => setShowLoginModal(true)} onOpenProfile={() => handleSetView('profile')} isActive={view === 'trading'} />}
+        </div>
+        <div style={{ display: view === 'profile' ? 'block' : 'none' }}>
+          {visitedViews.has('profile') && <ProfilePage onRequestLogin={() => setShowLoginModal(true)} isActive={view === 'profile'} />}
         </div>
 
       </div>
@@ -292,9 +316,17 @@ function AppContent() {
   );
 }
 
+// Keeps GSAP ScrollTrigger (the landing page's scroll animations) in step with
+// Lenis' smoothed scroll position instead of lagging a frame behind it.
+function LenisScrollTriggerSync() {
+  useLenis(() => ScrollTrigger.update());
+  return null;
+}
+
 function App() {
   return (
-    <ReactLenis root options={{ lerp: 0.08, smoothWheel: true }}>
+    <ReactLenis root options={LENIS_OPTIONS}>
+      <LenisScrollTriggerSync />
       <AppProvider>
         <AppContent />
       </AppProvider>
@@ -303,6 +335,7 @@ function App() {
 }
 
 function Calculator({ mode, selectedPack, isModal }) {
+  const { saveLuckStat } = useAppContext();
   const storageKey = `pokemontcgp-calc-${mode}-${selectedPack?.id || 'overall'}`;
   
   const [packsOpened, setPacksOpened] = useState(() => {
@@ -337,7 +370,13 @@ function Calculator({ mode, selectedPack, isModal }) {
       if (!isAuto) alert('Please enter packs opened.'); 
       return; 
     }
-    setResults(runLuckCalculation(packsOpened, counts, mode, selectedPack, deluxePacksOpened));
+    const result = runLuckCalculation(packsOpened, counts, mode, selectedPack, deluxePacksOpened);
+    setResults(result);
+
+    if (!isAuto && mode === 'overall' && result) {
+      // Remember the latest overall luck result on the account for the profile page.
+      saveLuckStat({ score: result.score, overallPct: result.overallPct, packs: packsOpened + deluxePacksOpened });
+    }
 
     if (!isAuto) {
       // On wide (laptop+) screens, collapse the input panel into a rail so the

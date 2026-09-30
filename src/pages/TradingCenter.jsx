@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
 import PokemonCard from '../components/PokemonCard';
 import { Search, X, Check, MessageCircle, Heart, ArrowRightLeft, Bell, Star } from 'lucide-react';
@@ -11,11 +11,12 @@ function parseCardId(id) {
   return { set: id.slice(0, lastDash), num: id.slice(lastDash + 1) };
 }
 
-const TradingCenter = ({ onRequestLogin, isActive = true }) => {
-  const { user, cards, wishlist, token } = useAppContext();
+const TradingCenter = ({ onRequestLogin, onOpenProfile, isActive = true }) => {
+  const { user, cards, wishlist, token, profile } = useAppContext();
   const [activeTab, setActiveTab] = useState('listing'); // 'listing' or 'matches'
   
-  const [inGameId, setInGameId] = useState('');
+  // In-game ID lives on the Profile page; Trading just reads it.
+  const inGameId = profile?.inGameId || '';
   const [offering, setOffering] = useState([]);
   const [requesting, setRequesting] = useState([]);
   
@@ -77,7 +78,6 @@ const TradingCenter = ({ onRequestLogin, isActive = true }) => {
     try {
       const res = await fetch(`${API_URL}/user`, { headers: { 'Authorization': `Bearer ${token}` } });
       const data = await res.json();
-      if (data.inGameId) setInGameId(data.inGameId);
       if (data.successfulTrades) setMyReputation(data.successfulTrades);
     } catch (e) {
       console.error(e);
@@ -109,18 +109,6 @@ const TradingCenter = ({ onRequestLogin, isActive = true }) => {
       }
     } catch (e) {
       console.error('saveTradeListing error:', e);
-    }
-  };
-
-  const saveInGameId = async () => {
-    try {
-      await fetch(`${API_URL}/sync`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ inGameId })
-      });
-    } catch (e) {
-      console.error(e);
     }
   };
 
@@ -363,18 +351,21 @@ const TradingCenter = ({ onRequestLogin, isActive = true }) => {
           </div>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(0,0,0,0.2)', padding: '8px 20px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)' }}>
+        <button
+          type="button"
+          onClick={onOpenProfile}
+          style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(0,0,0,0.2)', padding: '8px 20px', borderRadius: '20px', border: `1px solid ${inGameId ? 'rgba(255,255,255,0.1)' : 'rgba(255,149,0,0.5)'}`, cursor: 'pointer', color: 'var(--text-main)', fontSize: '1rem' }}
+        >
           <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-muted)' }}>In-Game ID:</span>
-          <input 
-            type="text" 
-            value={inGameId || ''}
-            onChange={e => setInGameId(e.target.value)}
-            onBlur={saveInGameId}
-            placeholder="e.g. 1234-5678-9012"
-            style={{ border: 'none', background: 'transparent', outline: 'none', fontWeight: 700, width: '200px', color: 'var(--text-main)', fontSize: '1rem' }}
-          />
-        </div>
-      </div>
+          {inGameId ? (
+            <>
+              <span style={{ fontWeight: 700 }}>{inGameId}</span>
+              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Edit</span>
+            </>
+          ) : (
+            <span style={{ fontWeight: 700, color: '#ff9500' }}>Add your ID in Profile →</span>
+          )}
+        </button>      </div>
 
       {activeTab === 'listing' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>

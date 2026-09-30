@@ -15,6 +15,27 @@ export const AppProvider = ({ children }) => {
   const [wishlist, setWishlist] = useState({}); // { cardId: true }
   const [customDecks, setCustomDecks] = useState([]); // array of deck objects
 
+  // Account profile (avatar, email, in-game ID, stats). Cached in localStorage so
+  // the top bar can show the avatar instantly instead of waiting on the network.
+  const [profile, setProfile] = useState(() => {
+    try {
+      if (!localStorage.getItem('tcgp_user')) return null;
+      const raw = localStorage.getItem('tcgp_profile');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      if (profile) localStorage.setItem('tcgp_profile', JSON.stringify(profile));
+      else localStorage.removeItem('tcgp_profile');
+    } catch {
+      // storage unavailable - profile just isn't cached
+    }
+  }, [profile]);
+
   // API URL logic for serverless backend
   const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -157,9 +178,10 @@ export const AppProvider = ({ children }) => {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Login failed');
-    
+
     setToken(data.token);
     setUser(data.username);
+    setProfile({ username: data.username, avatar: data.avatar });
     localStorage.setItem('tcgp_token', data.token);
     localStorage.setItem('tcgp_user', data.username);
   };
@@ -172,16 +194,89 @@ export const AppProvider = ({ children }) => {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Registration failed');
-    
+
     setToken(data.token);
     setUser(data.username);
+    setProfile({ username: data.username, avatar: data.avatar });
     localStorage.setItem('tcgp_token', data.token);
     localStorage.setItem('tcgp_user', data.username);
+  };
+
+  const refreshProfile = async () => {
+    if (!token) return null;
+    try {
+      const res = await fetch(`${API_URL}/profile`, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (res.status === 401 || res.status === 403) {
+        logout();
+        return null;
+      }
+      if (!res.ok) throw new Error('profile request failed');
+      const data = await res.json();
+      setProfile(data);
+      return data;
+    } catch (e) {
+      console.error('Failed to load profile', e);
+      return null;
+    }
+  };
+
+  // Load the full profile (also backfills an avatar for accounts that predate
+  // avatars) whenever a session starts or is restored. A failed load (network
+  // blip, server restarting) is retried a couple of times so the avatar isn't
+  // left blank until the next page refresh.
+  useEffect(() => {
+    if (!token) {
+      setProfile(null);
+      return;
+    }
+    let cancelled = false;
+    let timer;
+    const attempt = async (triesLeft) => {
+      const result = await refreshProfile();
+      if (!result && !cancelled && triesLeft > 0 && localStorage.getItem('tcgp_token')) {
+        timer = setTimeout(() => attempt(triesLeft - 1), 3000);
+      }
+    };
+    attempt(2);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [token]);
+
+  // Optimistic save: the UI updates immediately and rolls back if the server rejects it.
+  const saveProfile = async (patch) => {
+    if (!token) return { ok: false, error: 'Please sign in first' };
+    const previous = profile;
+    setProfile(prev => ({ ...(prev || {}), ...patch }));
+    try {
+      const res = await fetch(`${API_URL}/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(patch)
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Could not save your changes');
+      return { ok: true };
+    } catch (e) {
+      setProfile(previous);
+      return { ok: false, error: e.message };
+    }
+  };
+
+  // Remember the latest overall luck result on the account for the profile page.
+  const saveLuckStat = ({ score, overallPct, packs }) => {
+    if (!token) return;
+    const luckLast = { score, percentile: Math.round(overallPct * 1000) / 10, packs };
+    setProfile(prev => ({ ...(prev || {}), luckLast: { ...luckLast, at: new Date().toISOString() } }));
+    fetch(`${API_URL}/profile`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ luckLast })
+    }).catch(e => console.error('Failed to save luck stat', e));
   };
 
   const logout = () => {
     setToken(null);
     setUser(null);
+    setProfile(null);
     setCollection({});
     setWishlist({});
     setCustomDecks([]);
@@ -289,6 +384,10 @@ export const AppProvider = ({ children }) => {
       login,
       register,
       logout,
+      profile,
+      refreshProfile,
+      saveProfile,
+      saveLuckStat,
       collection,
       wishlist,
       toggleCardOwnership,

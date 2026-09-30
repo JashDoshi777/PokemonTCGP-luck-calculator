@@ -239,9 +239,7 @@
   width: 26px;
   height: 26px;
   border-radius: 13px;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.55);
   color: white;
   border: 2px solid var(--glass-panel-border);
   display: flex;

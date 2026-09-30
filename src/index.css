@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=SF+Pro+Display:wght@400;500;600;700;800&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=SF+Pro+Display:wght@400;500;600;700;800&display=swap');
 
 :root {
   --font-sys: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif;
@@ -43,8 +43,31 @@ body, html {
   min-height: 100vh;
   background-color: transparent;
   color: var(--text-main);
-  scroll-behavior: smooth;
+  /* Must stay "auto": CSS smooth-scrolling stacks on top of Lenis's own
+     smoothing and makes scrolling laggy and jittery. */
+  scroll-behavior: auto;
   overflow-x: clip; /* Prevent horizontal scroll blowout, but use clip so Lenis works properly */
+}
+
+/* Lenis' recommended base styles */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
 }
 
 /* Ensure native smooth scrolling for all internal overflow containers */
@@ -71,46 +94,61 @@ body, html {
   overflow: hidden;
 }
 
+/* The blobs get their softness from a gradient that fades to fully transparent,
+   NOT from filter: blur(100px). A huge CSS blur on an animating element is
+   re-rasterised every frame, and because every glass panel's backdrop-filter
+   sits on top of these, each frame also re-blurred every panel. Now they are
+   plain gradient layers that only move via transform (GPU-composited). */
 .ambient-blob {
   position: absolute;
   border-radius: 50%;
-  filter: blur(100px);
   opacity: 0.6;
-  animation: float 20s infinite ease-in-out alternate;
+  will-change: transform;
+  animation: float 30s infinite ease-in-out alternate;
+}
+
+/* Away from the home page the background holds still, so the blurred panels
+   above it have a static backdrop and stop re-blurring every frame. */
+.ambient-background.is-still .ambient-blob {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-blob {
+    animation: none;
+  }
 }
 
 .blob-1 {
   top: -10%; left: -10%;
-  width: 50vw; height: 50vw;
-  background: radial-gradient(circle, rgba(255,59,48,0.4) 0%, rgba(255,149,0,0.1) 70%);
+  width: 55vw; height: 55vw;
+  background: radial-gradient(circle closest-side, rgba(255,59,48,0.42) 0%, rgba(255,149,0,0.16) 55%, rgba(255,149,0,0) 100%);
   animation-delay: 0s;
 }
 
 .blob-2 {
   bottom: -20%; right: -10%;
-  width: 60vw; height: 60vw;
-  background: radial-gradient(circle, rgba(0,122,255,0.3) 0%, rgba(88,86,214,0.1) 70%);
+  width: 65vw; height: 65vw;
+  background: radial-gradient(circle closest-side, rgba(0,122,255,0.32) 0%, rgba(88,86,214,0.12) 55%, rgba(88,86,214,0) 100%);
   animation-delay: -5s;
 }
 
 .blob-3 {
   top: 40%; left: 60%;
-  width: 40vw; height: 40vw;
-  background: radial-gradient(circle, rgba(255,45,85,0.3) 0%, rgba(175,82,222,0.1) 70%);
+  width: 45vw; height: 45vw;
+  background: radial-gradient(circle closest-side, rgba(255,45,85,0.32) 0%, rgba(175,82,222,0.12) 55%, rgba(175,82,222,0) 100%);
   animation-delay: -10s;
 }
 
 @keyframes float {
-  0% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(5%, 10%) scale(1.1); }
-  100% { transform: translate(-5%, -5%) scale(0.9); }
+  0% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(5%, 10%, 0); }
+  100% { transform: translate3d(-5%, -5%, 0); }
 }
 
 /* Glassmorphism Utilities */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(40px) saturate(200%);
-  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  background: rgba(255, 255, 255, 0.82); /* opaque-ish instead of backdrop-filter: blur() re-blurs every scroll frame */
   border: 1px solid rgba(255, 255, 255, 0.8);
   box-shadow: 0 20px 60px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1);
   border-radius: var(--radius-xl);
@@ -128,9 +166,7 @@ body, html {
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(30px) saturate(150%);
-  -webkit-backdrop-filter: blur(30px) saturate(150%);
+  background: rgba(255, 255, 255, 0.72);
   border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: var(--radius-lg);
   box-shadow: 0 10px 30px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.8);
@@ -235,8 +271,8 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
   left: 50%;
   transform: translateX(-50%);
   background: rgba(240, 240, 245, 0.65); /* iOS System Gray Wash */
-  backdrop-filter: blur(50px) saturate(250%);
-  -webkit-backdrop-filter: blur(50px) saturate(250%);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 100px;
   padding: 6px;
@@ -282,8 +318,8 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
   display: flex;
   align-items: center;
   background: rgba(240, 240, 245, 0.65);
-  backdrop-filter: blur(50px) saturate(250%);
-  -webkit-backdrop-filter: blur(50px) saturate(250%);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
   border: 1px solid rgba(255, 255, 255, 0.3);
   padding: 8px 16px;
   border-radius: 100px;
@@ -619,7 +655,7 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
 
 .floating-card {
   animation: floatCard 8s infinite alternate ease-in-out;
-  filter: drop-shadow(0 30px 60px rgba(0,0,0,0.3));
+  will-change: transform;
 }
 
 @keyframes floatCard {
@@ -671,9 +707,7 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
 
 .sheet-header {
   padding: 16px 24px 20px;
-  background: rgba(242, 242, 247, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(242, 242, 247, 0.96);
   border-bottom: 1px solid rgba(0,0,0,0.08);
   position: relative;
   z-index: 10;
@@ -1046,9 +1080,7 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.85);
   border: 1px solid rgba(0, 0, 0, 0.05);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
   display: flex;
@@ -1094,9 +1126,7 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.85);
   border: 1px solid rgba(0, 0, 0, 0.05);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
   display: flex;
@@ -1271,8 +1301,8 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
     border-left: none;
     box-shadow: 20px 0 60px rgba(0,0,0,0.1);
     background: rgba(255, 255, 255, 0.85) !important;
-    backdrop-filter: blur(50px) saturate(200%) !important;
-    -webkit-backdrop-filter: blur(50px) saturate(200%) !important;
+    backdrop-filter: blur(20px) saturate(150%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
   }
   .nav-ultra.is-open {
     transform: translateX(0);
@@ -1352,8 +1382,8 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
   height: 44px;
   border-radius: 50%;
   background: rgba(240, 240, 245, 0.65);
-  backdrop-filter: blur(50px) saturate(250%);
-  -webkit-backdrop-filter: blur(50px) saturate(250%);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
   border: 1px solid rgba(255, 255, 255, 0.3);
   display: flex;
   justify-content: center;
@@ -1380,6 +1410,27 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
     width: 40px;
     height: 40px;
   }
+}
+
+/* Avatar button in the top bar (replaces the plain username text) */
+.nav-avatar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+}
+
+.nav-avatar-btn:hover {
+  transform: scale(1.08);
+}
+
+.nav-avatar-btn.active {
+  box-shadow: 0 0 0 2px var(--text-main);
 }
 
 /* Pro pill - sits to the left of the theme toggle */

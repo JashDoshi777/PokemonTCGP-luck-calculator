@@ -83,6 +83,7 @@ const createRateLimiter = ({ maxAttempts, windowMs }) => {
 
 const rateLimitAuth = createRateLimiter({ maxAttempts: 10, windowMs: 60 * 1000 });
 const rateLimitWaitlist = createRateLimiter({ maxAttempts: 20, windowMs: 60 * 1000 });
+const rateLimitProfile = createRateLimiter({ maxAttempts: 60, windowMs: 60 * 1000 });
 
 // A non-numeric :userId would otherwise hit a raw integer-column comparison
 // deep in a query and bubble up as an opaque 500 - reject it cleanly upfront.
@@ -117,6 +118,35 @@ const hasRelationship = async (userIdA, userIdB) => {
   const bGivesAWants = (b_offer || []).some(c => (a_request || []).includes(c));
   const aGivesBWants = (a_offer || []).some(c => (b_request || []).includes(c));
   return bGivesAWants && aGivesBWants;
+};
+
+// Profile avatars are a Pokédex number plus a background tint. The palette and
+// id range mirror src/data/avatars.js on the client.
+const AVATAR_BACKGROUNDS = ['#FFD9D9', '#FFE8CC', '#FFF3BF', '#DDF3D6', '#D3F0F5', '#D9E4FF', '#E6DCFF', '#FFD9EC'];
+const MAX_POKEMON_ID = 1025;
+const STARTER_POOL_MAX = 386; // new accounts start with a recognisable Gen 1-3 Pokémon
+
+const randomDefaultAvatar = () => ({
+  pokemon: 1 + Math.floor(Math.random() * STARTER_POOL_MAX),
+  bg: AVATAR_BACKGROUNDS[Math.floor(Math.random() * AVATAR_BACKGROUNDS.length)]
+});
+
+const isValidAvatar = (avatar) =>
+  !!avatar &&
+  Number.isInteger(avatar.pokemon) && avatar.pokemon >= 1 && avatar.pokemon <= MAX_POKEMON_ID &&
+  typeof avatar.bg === 'string' && /^#[0-9a-fA-F]{6}$/.test(avatar.bg);
+
+// Every account gets an avatar automatically. Existing accounts created before
+// avatars existed are backfilled the first time they log in or load a profile.
+// COALESCE keeps whichever avatar was written first if two requests race.
+const ensureAvatar = async (userId) => {
+  const result = await pool.query(
+    `INSERT INTO user_data (user_id, avatar) VALUES ($1, $2)
+     ON CONFLICT (user_id) DO UPDATE SET avatar = COALESCE(user_data.avatar, EXCLUDED.avatar)
+     RETURNING avatar`,
+    [userId, JSON.stringify(randomDefaultAvatar())]
+  );
+  return result.rows[0].avatar;
 };
 
 // Initialize Tables - gated by a shared secret since this runs before any user
@@ -213,6 +243,11 @@ app.get('/api/init', async (req, res) => {
     await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS pro_waitlist_user_unique ON pro_waitlist (user_id) WHERE user_id IS NOT NULL;`);
     await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS pro_waitlist_visitor_unique ON pro_waitlist (visitor_id) WHERE visitor_id IS NOT NULL;`);
 
+    // Profile fields
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(254);`);
+    await pool.query(`ALTER TABLE user_data ADD COLUMN IF NOT EXISTS avatar JSONB;`);
+    await pool.query(`ALTER TABLE user_data ADD COLUMN IF NOT EXISTS luck_last JSONB;`);
+
     res.json({ message: "Database initialized successfully" });
   } catch (error) {
     console.error(error);
@@ -234,9 +269,10 @@ app.post('/api/register', rateLimitAuth, async (req, res) => {
     
     const user = result.rows[0];
     await pool.query('INSERT INTO user_data (user_id) VALUES ($1)', [user.id]);
+    const avatar = await ensureAvatar(user.id);
 
     const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, { expiresIn: '30d' });
-    res.json({ token, username: user.username });
+    res.json({ token, username: user.username, avatar });
   } catch (error) {
     if (error.code === '23505') {
       return res.status(400).json({ error: "Username already exists" });
@@ -258,8 +294,9 @@ app.post('/api/login', rateLimitAuth, async (req, res) => {
     
     if (!validPassword) return res.status(401).json({ error: "Invalid credentials" });
 
+    const avatar = await ensureAvatar(user.id);
     const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, { expiresIn: '30d' });
-    res.json({ token, username: user.username });
+    res.json({ token, username: user.username, avatar });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });
@@ -637,6 +674,106 @@ app.get('/api/pro/waitlist/status', rateLimitWaitlist, optionalAuth, async (req,
     const stats = isAdmin ? await getWaitlistStats() : undefined;
 
     res.json({ joined, email, isAdmin, stats });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Profile: the signed-in user's own account details, avatar and stats.
+app.get('/api/profile', rateLimitProfile, authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT u.username, u.email, u.created_at,
+              ud.in_game_id, ud.successful_trades, ud.last_active, ud.avatar, ud.luck_last,
+              (SELECT CASE WHEN jsonb_typeof(t.offering_cards) = 'array' THEN jsonb_array_length(t.offering_cards) ELSE 0 END
+                 FROM trades t WHERE t.user_id = u.id LIMIT 1) AS offering_count,
+              (SELECT CASE WHEN jsonb_typeof(t.requesting_cards) = 'array' THEN jsonb_array_length(t.requesting_cards) ELSE 0 END
+                 FROM trades t WHERE t.user_id = u.id LIMIT 1) AS requesting_count
+       FROM users u
+       LEFT JOIN user_data ud ON ud.user_id = u.id
+       WHERE u.id = $1`,
+      [req.user.id]
+    );
+    if (result.rows.length === 0) return res.sendStatus(404);
+    const row = result.rows[0];
+
+    const avatar = row.avatar || await ensureAvatar(req.user.id);
+
+    res.json({
+      username: row.username,
+      email: row.email,
+      inGameId: row.in_game_id,
+      avatar,
+      createdAt: row.created_at,
+      lastActive: row.last_active,
+      successfulTrades: row.successful_trades || 0,
+      luckLast: row.luck_last,
+      tradeCounts: {
+        offering: row.offering_count || 0,
+        requesting: row.requesting_count || 0
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Partial update: send only the fields being changed.
+app.put('/api/profile', rateLimitProfile, authenticateToken, async (req, res) => {
+  try {
+    const { email, inGameId, avatar, luckLast } = req.body || {};
+
+    let cleanEmail;
+    if (email !== undefined) {
+      cleanEmail = typeof email === 'string' ? email.trim().toLowerCase() : null;
+      if (cleanEmail === null || (cleanEmail !== '' && (cleanEmail.length > 254 || !EMAIL_PATTERN.test(cleanEmail)))) {
+        return res.status(400).json({ error: "Please enter a valid email address" });
+      }
+    }
+
+    let cleanInGameId;
+    if (inGameId !== undefined) {
+      cleanInGameId = typeof inGameId === 'string' ? inGameId.trim() : null;
+      if (cleanInGameId === null || cleanInGameId.length > 64) {
+        return res.status(400).json({ error: "In-game ID is too long" });
+      }
+    }
+
+    if (avatar !== undefined && !isValidAvatar(avatar)) {
+      return res.status(400).json({ error: "Invalid avatar" });
+    }
+
+    let cleanLuck;
+    if (luckLast !== undefined) {
+      const { score, percentile, packs } = luckLast || {};
+      const valid = typeof score === 'number' && score >= 1 && score <= 10 &&
+        typeof percentile === 'number' && percentile >= 0 && percentile <= 100 &&
+        Number.isInteger(packs) && packs >= 0 && packs <= 10000000;
+      if (!valid) return res.status(400).json({ error: "Invalid luck stat" });
+      cleanLuck = { score, percentile, packs, at: new Date().toISOString() };
+    }
+
+    if (cleanEmail !== undefined) {
+      await pool.query('UPDATE users SET email = $1 WHERE id = $2', [cleanEmail || null, req.user.id]);
+    }
+
+    const setParts = [];
+    const values = [req.user.id];
+    if (cleanInGameId !== undefined) { values.push(cleanInGameId || null); setParts.push(`in_game_id = $${values.length}`); }
+    if (avatar !== undefined) { values.push(JSON.stringify({ pokemon: avatar.pokemon, bg: avatar.bg })); setParts.push(`avatar = $${values.length}`); }
+    if (cleanLuck !== undefined) { values.push(JSON.stringify(cleanLuck)); setParts.push(`luck_last = $${values.length}`); }
+
+    if (setParts.length > 0) {
+      await pool.query('INSERT INTO user_data (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING', [req.user.id]);
+      await pool.query(
+        `UPDATE user_data SET ${setParts.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE user_id = $1`,
+        values
+      );
+    }
+
+    res.json({ success: true });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });

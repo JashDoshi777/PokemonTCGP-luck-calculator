@@ -14,7 +14,6 @@
   position: relative;
   transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.25s ease;
   cursor: pointer;
-  will-change: transform, box-shadow;
 }
 
 .pokemon-card img {
@@ -24,7 +23,10 @@
   border-radius: 8px;
 }
 
+/* Only the hovered card gets promoted to its own GPU layer. Putting will-change
+   on every card meant hundreds of separate layers on the Collection page. */
 .pokemon-card-container:hover .pokemon-card {
+  will-change: transform;
   transform: translateY(-8px) scale(1.02);
   box-shadow: 0 12px 24px rgba(0,0,0,0.15);
   z-index: 10;
@@ -81,9 +83,7 @@
   width: 26px;
   height: 26px;
   border-radius: 13px;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.55);
   border: 2px solid var(--glass-panel-border);
   display: flex;
   align-items: center;
