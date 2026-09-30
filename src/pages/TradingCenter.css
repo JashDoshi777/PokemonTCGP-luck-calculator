@@ -1,0 +1,41 @@
+﻿/* Trading Center: phone layout only. Laptop layout is governed by the inline styles. */
+@media (max-width: 768px) {
+  .trade-header { gap: 16px !important; padding: 20px !important; }
+  .trade-header > div:first-child { width: 56px !important; height: 56px !important; border-radius: 16px !important; flex-shrink: 0; }
+  .trade-header > div:first-child svg { width: 28px; height: 28px; }
+  .trade-header-text { flex: 1 1 calc(100% - 80px) !important; min-width: 0; }
+  .trade-header-text h2 { font-size: 1.7rem !important; }
+  .trade-header-text p { font-size: 0.95rem !important; margin-top: 4px !important; }
+  .trade-endorse {
+    flex: 1 1 100%;
+    flex-direction: row !important;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 18px !important;
+  }
+  .trade-endorse > div:first-child { margin-bottom: 0 !important; }
+  .trade-endorse > div:last-child { font-size: 1.6rem !important; }
+
+  .trade-toolbar { gap: 12px !important; margin-bottom: 20px !important; }
+  .trade-tabs { width: 100%; gap: 8px !important; }
+  .trade-tabs .apple-segmented-control { flex: 1; width: auto !important; }
+  .trade-tabs .segmented-btn { flex: 1; white-space: nowrap; }
+  .trade-id-btn {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 10px 16px !important;
+  }
+
+  .trade-section-head { flex-direction: column; align-items: stretch !important; }
+  .trade-section-actions { flex-wrap: wrap; width: 100%; }
+  .trade-section-actions > button { flex: 1 1 140px; justify-content: center; white-space: nowrap; }
+  .trade-section-head > .btn-super { width: 100%; }
+
+  .trade-match-head > button { width: 100%; justify-content: center; }
+  .trade-chat-actions { flex-wrap: wrap; }
+
+  .trade-section-head + .collection-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 8px !important; padding: 6px !important; }
+  .trade-id-btn { background: rgba(255, 149, 0, 0.08) !important; }
+}
+

@@ -1,4 +1,4 @@
-import { BASE_RATES, DELUXE_RATES, BASE_RATES_SLOT6, SHINY_OVERALL_BLEND, GOD_RATE, SHINY_GOD_RATE, RARITIES } from './data';
+﻿import { BASE_RATES, DELUXE_RATES, BASE_RATES_SLOT6, SHINY_OVERALL_BLEND, GOD_RATE, SHINY_GOD_RATE, RARITIES } from './data';
 
 export function getShinyRate(key, pack) {
   if ((key === 's1' || key === 's2') && pack && pack.shinySlot6) {
@@ -40,6 +40,16 @@ export function normCDF(z) {
   const t = 1 / (1 + p * zz);
   const y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-zz * zz);
   return 0.5 * (1 + sg * y);
+}
+
+// Percentile of `got` successes given an expected count. Rare events (exp < 5, e.g. God Packs)
+// use the mid-point Poisson CDF instead of the normal approximation, same as the rarity rows.
+function luckPercentile(exp, got) {
+  if (exp < 5) {
+    const cb = got > 0 ? poissonCDF(exp, got - 1) : 0;
+    return (cb + poissonCDF(exp, got)) / 2;
+  }
+  return normCDF(zSc(exp, got));
 }
 
 export function runLuckCalculation(standardPacksInput, counts, mode, selectedPack, deluxePacksInput = 0) {
@@ -138,9 +148,13 @@ export function runLuckCalculation(standardPacksInput, counts, mode, selectedPac
     results,
     godCount,
     godExp,
-    godPct: normCDF(godZ),
+    godApplicable: stdNForGod > 0,
+    godProb: GOD_RATE,
+    godPct: luckPercentile(godExp, godCount),
     shinyGodCount,
     shinyGodExp,
-    shinyGodPct
+    shinyGodPct: luckPercentile(shinyGodExp, shinyGodCount),
+    shinyGodApplicable: !!selectedPack?.hasShinyGodPack && N_std > 0,
+    shinyGodProb: selectedPack?.hasShinyGodPack ? (selectedPack.shinyGodPackRate || SHINY_GOD_RATE) : 0
   };
 }

@@ -334,6 +334,18 @@ function App() {
   );
 }
 
+// Unified rows for the result lists: God Pack / Shiny God Pack first (when they apply), then the card rarities.
+function buildDisplayRows(results) {
+  const rows = [];
+  if (results.godApplicable) {
+    rows.push({ id: 'godPack', icon: ICONS.god, got: results.godCount, pct: results.godPct, prob: results.godProb });
+  }
+  if (results.shinyGodApplicable) {
+    rows.push({ id: 'shinyGodPack', icon: `<span style="display:inline-flex;filter:hue-rotate(180deg)">${ICONS.god}</span>`, got: results.shinyGodCount, pct: results.shinyGodPct, prob: results.shinyGodProb });
+  }
+  return rows.concat(results.results.map(({ r, got, pct, prob }) => ({ id: r.id, icon: r.icon, got, pct, prob })));
+}
+
 function Calculator({ mode, selectedPack, isModal }) {
   const { saveLuckStat } = useAppContext();
   const storageKey = `pokemontcgp-calc-${mode}-${selectedPack?.id || 'overall'}`;
@@ -401,6 +413,7 @@ function Calculator({ mode, selectedPack, isModal }) {
   }, [packsOpened, deluxePacksOpened, counts, mode, selectedPack]);
 
   const showCollapsedRail = !isModal && isLogCollapsed;
+  const displayRows = results ? buildDisplayRows(results) : [];
 
   return (
     <div className={`layout-grid animate-enter ${isModal ? 'ios-mode' : ''} ${showCollapsedRail ? 'log-collapsed' : ''}`}>
@@ -414,8 +427,8 @@ function Calculator({ mode, selectedPack, isModal }) {
         <>
         <h2 className={isModal ? "ios-section-header" : "text-gradient"} style={!isModal ? { fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: '40px' } : {}}>Trainer's Log</h2>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: isModal ? '16px' : '32px' }}>
-          <div className={isModal ? "ios-card" : ""} style={!isModal ? { display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' } : { width: '100%' }}>
+        <div className="calc-form" style={{ display: 'flex', flexDirection: 'column', gap: isModal ? '16px' : '32px' }}>
+          <div className={isModal ? "ios-card" : "calc-row"} style={!isModal ? { display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' } : { width: '100%' }}>
             <div>
               <div style={{ fontWeight: 700, fontSize: isModal ? '1.1rem' : '1.4rem' }}>{mode === 'overall' ? 'Standard Packs' : 'Total Packs'}</div>
               <div style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>Enter the exact number opened</div>
@@ -428,9 +441,9 @@ function Calculator({ mode, selectedPack, isModal }) {
           </div>
           
           {mode === 'overall' && (
-            <div className={isModal ? "ios-card" : ""} style={!isModal ? { display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' } : { width: '100%' }}>
+            <div className={isModal ? "ios-card" : "calc-row"} style={!isModal ? { display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' } : { width: '100%' }}>
               <div>
-                <div style={{ fontWeight: 700, fontSize: isModal ? '1.1rem' : '1.4rem' }}>Deluxe ex Packs</div>
+                <div style={{ fontWeight: 700, fontSize: isModal ? '1.1rem' : '1.4rem' }}>Deluxe ex and Mega Deluxe ex Packs</div>
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>These guarantee an ex, handled separately!</div>
               </div>
               <div className="stepper-ultra">
@@ -443,7 +456,7 @@ function Calculator({ mode, selectedPack, isModal }) {
 
           <div className={isModal ? "" : "rarity-grid"} style={isModal ? { display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' } : { marginTop: '20px' }}>
             {!(mode === 'perset' && selectedPack?.guaranteedEx) && (
-              <div className={isModal ? "ios-card" : "glass-card"} style={!isModal ? { padding: '24px 10px', display: 'flex', flexDirection: 'column', height: '100%' } : { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', gap: '16px', width: '100%' }}>
+              <div className={isModal ? "ios-card ios-rarity-row" : "glass-card"} style={!isModal ? { padding: '24px 10px', display: 'flex', flexDirection: 'column', height: '100%' } : { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', gap: '16px', width: '100%' }}>
                 <div style={isModal ? { display: 'flex', alignItems: 'center', gap: '16px' } : { display: 'contents' }}>
                   <div dangerouslySetInnerHTML={{ __html: ICONS.god }} style={{ height: isModal ? '24px' : '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: isModal ? 'scale(1.2)' : 'scale(1.5)' }} />
                   <div style={{ fontWeight: 700, margin: isModal ? '0' : '20px 0 16px', fontSize: '1.05rem', letterSpacing: '-0.01em', textAlign: isModal ? 'left' : 'center', flexGrow: isModal ? 0 : 1, display: 'flex', alignItems: 'center', justifyContent: isModal ? 'flex-start' : 'center' }}>God Pack</div>
@@ -457,7 +470,7 @@ function Calculator({ mode, selectedPack, isModal }) {
             )}
 
             {mode === 'perset' && selectedPack?.hasShinyGodPack && (
-              <div className={isModal ? "ios-card" : "glass-card"} style={!isModal ? { padding: '24px 10px', display: 'flex', flexDirection: 'column', height: '100%' } : { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', gap: '16px', width: '100%' }}>
+              <div className={isModal ? "ios-card ios-rarity-row" : "glass-card"} style={!isModal ? { padding: '24px 10px', display: 'flex', flexDirection: 'column', height: '100%' } : { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', gap: '16px', width: '100%' }}>
                 <div style={isModal ? { display: 'flex', alignItems: 'center', gap: '16px' } : { display: 'contents' }}>
                   <div dangerouslySetInnerHTML={{ __html: ICONS.god }} style={{ height: isModal ? '24px' : '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: isModal ? 'scale(1.2)' : 'scale(1.5)', filter: 'hue-rotate(180deg)' }} />
                   <div style={{ fontWeight: 700, margin: isModal ? '0' : '20px 0 16px', fontSize: '1.05rem', letterSpacing: '-0.01em', textAlign: isModal ? 'left' : 'center', flexGrow: isModal ? 0 : 1, display: 'flex', alignItems: 'center', justifyContent: isModal ? 'flex-start' : 'center' }}>Shiny God Pack</div>
@@ -474,7 +487,7 @@ function Calculator({ mode, selectedPack, isModal }) {
               if (r.packSpecific && r.packSpecific !== selectedPack?.id) return false;
               return !r.shinyOnly || mode === 'overall' || selectedPack.hasShiny;
             }).map(r => (
-              <div key={r.id} className={isModal ? "ios-card" : "glass-card"} style={!isModal ? { padding: '24px 10px', display: 'flex', flexDirection: 'column', height: '100%' } : { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', gap: '16px', width: '100%' }}>
+              <div key={r.id} className={isModal ? "ios-card ios-rarity-row" : "glass-card"} style={!isModal ? { padding: '24px 10px', display: 'flex', flexDirection: 'column', height: '100%' } : { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', gap: '16px', width: '100%' }}>
                 <div style={isModal ? { display: 'flex', alignItems: 'center', gap: '16px' } : { display: 'contents' }}>
                   <div dangerouslySetInnerHTML={{ __html: r.icon }} style={{ height: isModal ? '24px' : '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: isModal ? 'scale(1.2)' : 'scale(1.5)' }} />
                   <div style={{ fontWeight: 700, margin: isModal ? '0' : '20px 0 16px', fontSize: '1.05rem', letterSpacing: '-0.01em', textAlign: isModal ? 'left' : 'center', flexGrow: isModal ? 0 : 1, display: 'flex', alignItems: 'center', justifyContent: isModal ? 'flex-start' : 'center' }}>{r.name}</div>
@@ -530,7 +543,7 @@ function Calculator({ mode, selectedPack, isModal }) {
               <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '20px', paddingLeft: isModal ? '20px' : '8px' }}>Luck Distribution</h3>
               <div className={isModal ? "ios-card" : "data-card"} style={!isModal ? { background: 'var(--card-bg, rgba(255,255,255,0.7))', borderRadius: 'var(--radius-lg)', padding: '24px' } : { display: 'flex', flexDirection: 'column', padding: '20px', gap: '20px', alignItems: 'stretch', width: '100%' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  {results.results.map(({ r, got, exp, pct }) => {
+                  {displayRows.map(({ id, icon, got, pct }) => {
                     const percentage = pct * 100;
                     let barColor = '#34c759'; 
                     let tagText = 'Incredible';
@@ -555,10 +568,10 @@ function Calculator({ mode, selectedPack, isModal }) {
                     }
 
                     return (
-                      <div key={r.id} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div key={id} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '6px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <div dangerouslySetInnerHTML={{ __html: r.icon }} style={{ height: '24px', display: 'flex', alignItems: 'center' }} />
+                            <div dangerouslySetInnerHTML={{ __html: icon }} style={{ height: '24px', display: 'flex', alignItems: 'center' }} />
                             <span style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--text-main)' }}>&times;{got}</span>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -579,24 +592,24 @@ function Calculator({ mode, selectedPack, isModal }) {
             </div>
 
             <div style={{ marginTop: '32px' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '20px', paddingLeft: isModal ? '20px' : '8px' }}>Average Packs per Card</h3>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '20px', paddingLeft: isModal ? '20px' : '8px' }}>Average Packs per Rarity</h3>
               <div className={isModal ? "ios-card" : "data-card"} style={!isModal ? { background: 'var(--card-bg, rgba(255,255,255,0.7))', borderRadius: 'var(--radius-lg)', overflow: 'hidden' } : { borderRadius: '20px', overflow: 'hidden', border: 'var(--card-border, 1px solid rgba(0,0,0,0.05))', background: 'var(--card-bg, #fff)', padding: 0, width: '100%', display: 'block' }}>
                 <div style={{ overflowX: 'auto', width: '100%' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', minWidth: '300px' }}>
                   <thead>
                     <tr style={{ borderBottom: 'var(--card-border, 2px solid rgba(0,0,0,0.05))' }}>
                       <th style={{ padding: '16px 20px', textAlign: 'left', fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-muted)' }}>Rarity</th>
-                      <th style={{ padding: '16px 20px', fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: 1.2 }}>Standard<br/><span style={{ fontSize: '0.7rem', fontWeight: 400 }}>Packs/card</span></th>
+                      <th style={{ padding: '16px 20px', fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: 1.2 }}>Standard<br/><span style={{ fontSize: '0.7rem', fontWeight: 400 }}>Packs/rarity</span></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {results.results.map(({ r, got, prob }, index) => {
+                    {displayRows.map(({ id, icon, prob }, index) => {
                       const standardPacks = prob > 0 ? (1 / prob).toFixed(1) : '-';
                       
                       return (
-                        <tr key={r.id} style={{ borderBottom: index === results.results.length - 1 ? 'none' : '1px solid rgba(0,0,0,0.04)' }}>
+                        <tr key={id} style={{ borderBottom: index === displayRows.length - 1 ? 'none' : '1px solid rgba(0,0,0,0.04)' }}>
                           <td style={{ padding: '16px 20px', textAlign: 'left' }}>
-                            <div dangerouslySetInnerHTML={{ __html: r.icon }} style={{ height: '24px', display: 'flex', alignItems: 'center' }} />
+                            <div dangerouslySetInnerHTML={{ __html: icon }} style={{ height: '24px', display: 'flex', alignItems: 'center' }} />
                           </td>
                           <td style={{ padding: '16px 20px', fontWeight: 800, color: 'var(--text-main)', fontVariantNumeric: 'tabular-nums', fontSize: '1.05rem' }}>
                             {standardPacks}
@@ -611,7 +624,7 @@ function Calculator({ mode, selectedPack, isModal }) {
             </div>
           </div>
         ) : (
-          <div className={isModal ? "ios-card" : ""} style={!isModal ? { padding: '100px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: '1.2rem', fontWeight: 500 } : { padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '1rem', fontWeight: 500, justifyContent: 'center' }}>
+          <div className={isModal ? "ios-card" : "calc-empty"} style={!isModal ? { padding: '100px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: '1.2rem', fontWeight: 500 } : { padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '1rem', fontWeight: 500, justifyContent: 'center' }}>
             The Rotom Dex is standing by... enter your pulls to begin!
           </div>
         )}

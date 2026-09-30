@@ -368,3 +368,29 @@
   }
 }
 
+
+/* ===== Phone layout: card overlays sit INSIDE the card corners so neighbours never collide ===== */
+@media (max-width: 768px) {
+  .collection-grid { gap: 14px 10px; padding: 6px 4px; }
+  .collection-card-wrapper:hover { transform: none; }
+
+  .collection-card-wrapper .card-count-badge {
+    top: 4px; right: 4px;
+    min-width: 22px; height: 22px;
+    font-size: 11px; padding: 0 6px;
+    border-width: 1.5px; border-radius: 11px;
+  }
+  .collection-card-wrapper .card-wishlist-btn {
+    bottom: 4px; right: 4px;
+    width: 24px; height: 24px; border-radius: 12px; border-width: 1.5px;
+    background: rgba(0, 0, 0, 0.5);
+  }
+  .collection-card-wrapper .card-wishlist-btn svg { width: 12px; height: 12px; }
+  .collection-card-wrapper .decrement-btn {
+    top: 4px; left: 4px;
+    width: 22px; height: 22px; border-radius: 11px; border-width: 1.5px;
+    font-size: 15px; line-height: 1;
+    opacity: 1; transform: none;
+  }
+  .collection-card-wrapper .missing-overlay { font-size: 0.7rem; padding: 3px 8px; }
+}

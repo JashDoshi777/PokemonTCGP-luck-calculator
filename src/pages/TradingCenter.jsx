@@ -3,6 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import PokemonCard from '../components/PokemonCard';
 import { Search, X, Check, MessageCircle, Heart, ArrowRightLeft, Bell, Star } from 'lucide-react';
 import './CollectionTracker.css'; // Reuse existing styles where possible
+import './TradingCenter.css';
 
 // Card ids are "${set}-${number}" - split on the LAST hyphen, not the first,
 // since some set codes (e.g. promo sets) contain hyphens themselves.
@@ -316,18 +317,18 @@ const TradingCenter = ({ onRequestLogin, onOpenProfile, isActive = true }) => {
   return (
     <>
       <div className="collection-page animate-enter">
-        <div className="glass-panel" style={{ display: 'flex', gap: '40px', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap' }}>
+        <div className="glass-panel trade-header" style={{ display: 'flex', gap: '40px', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap' }}>
         <div style={{ width: '80px', height: '80px', borderRadius: '20px', background: 'linear-gradient(135deg, #0a84ff, #30d158)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 10px 20px rgba(0,0,0,0.15)' }}>
           <ArrowRightLeft color="white" size={40} />
         </div>
-        <div style={{ flex: 1 }}>
+        <div className="trade-header-text" style={{ flex: 1 }}>
           <h2 style={{ fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.04em' }} className="text-gradient">Trading Center</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', marginTop: '8px', fontWeight: 500 }}>
             List your dupes, specify what you need, and the engine will find perfect matches.
           </p>
         </div>
         
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(255,214,10,0.1)', padding: '12px 24px', borderRadius: '20px', border: '1px solid rgba(255,214,10,0.2)', boxShadow: '0 8px 16px rgba(0,0,0,0.1)' }}>
+        <div className="trade-endorse" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(255,214,10,0.1)', padding: '12px 24px', borderRadius: '20px', border: '1px solid rgba(255,214,10,0.2)', boxShadow: '0 8px 16px rgba(0,0,0,0.1)' }}>
           <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#ffd60a', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Endorsements</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#ffd60a', fontSize: '2.2rem', fontWeight: 800, lineHeight: 1 }}>
             <Star size={26} fill="currentColor" /> {myReputation}
@@ -335,8 +336,8 @@ const TradingCenter = ({ onRequestLogin, onOpenProfile, isActive = true }) => {
         </div>
       </div>
 
-      <div style={{ marginBottom: '30px', display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+      <div className="trade-toolbar" style={{ marginBottom: '30px', display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+        <div className="trade-tabs" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <div className="apple-segmented-control" style={{ width: 'auto' }}>
             <button className={`segmented-btn ${activeTab === 'listing' ? 'active' : ''}`} onClick={() => setActiveTab('listing')}>My Listing</button>
             <button className={`segmented-btn ${activeTab === 'matches' ? 'active' : ''}`} onClick={() => setActiveTab('matches')}>Matches</button>
@@ -353,6 +354,7 @@ const TradingCenter = ({ onRequestLogin, onOpenProfile, isActive = true }) => {
         
         <button
           type="button"
+          className="trade-id-btn"
           onClick={onOpenProfile}
           style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(0,0,0,0.2)', padding: '8px 20px', borderRadius: '20px', border: `1px solid ${inGameId ? 'rgba(255,255,255,0.1)' : 'rgba(255,149,0,0.5)'}`, cursor: 'pointer', color: 'var(--text-main)', fontSize: '1rem' }}
         >
@@ -371,7 +373,7 @@ const TradingCenter = ({ onRequestLogin, onOpenProfile, isActive = true }) => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
           {/* Offering Section */}
           <div className="glass-card" style={{ padding: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+            <div className="trade-section-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
               <h3 style={{ fontSize: '1.3rem', fontWeight: 800 }}>Cards I'm Offering</h3>
               <button className="btn-super" style={{ padding: '8px 16px', fontSize: '0.9rem' }} onClick={() => setSearchMode('offering')}>+ Add Cards</button>
             </div>
@@ -380,9 +382,9 @@ const TradingCenter = ({ onRequestLogin, onOpenProfile, isActive = true }) => {
 
           {/* Requesting Section */}
           <div className="glass-card" style={{ padding: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+            <div className="trade-section-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
               <h3 style={{ fontSize: '1.3rem', fontWeight: 800 }}>Cards I Want</h3>
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div className="trade-section-actions" style={{ display: 'flex', gap: '10px' }}>
                 <button className="nav-pill" style={{ background: 'rgba(255, 45, 85, 0.1)', color: '#ff2d55', fontWeight: 700 }} onClick={importWishlist}>
                   <Heart size={16} fill="currentColor" style={{ marginRight: '6px' }}/> Import Wishlist
                 </button>
@@ -407,7 +409,7 @@ const TradingCenter = ({ onRequestLogin, onOpenProfile, isActive = true }) => {
           ) : (
             matches.map(m => (
               <div key={m.userId} className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                <div className="trade-match-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                     <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, #FF3B30, #FF2D55)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1.2rem', position: 'relative' }}>
                       {m.username.charAt(0).toUpperCase()}
@@ -535,7 +537,7 @@ const TradingCenter = ({ onRequestLogin, onOpenProfile, isActive = true }) => {
                   </div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{isOnline(chatUser.lastActive) ? 'Online now' : 'Offline'}</div>
                 </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div className="trade-chat-actions" style={{ display: 'flex', gap: '8px' }}>
                   <button onClick={() => endorseTrader(chatUser.userId)} style={{ background: 'rgba(52, 199, 89, 0.1)', color: '#34c759', border: 'none', padding: '6px 12px', borderRadius: '14px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <Star size={14} fill="currentColor" /> Endorse
                   </button>
