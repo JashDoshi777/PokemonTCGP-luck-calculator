@@ -112,7 +112,6 @@
 }
 
 .type-pill.type-darkness { background: linear-gradient(135deg, #4b5563, #1f2937); }
-.type-pill.type-water { background: linear-gradient(135deg, #60a5fa, #2563eb); }
 .type-pill.type-fire { background: linear-gradient(135deg, #f87171, #dc2626); }
 .type-pill.type-lightning { background: linear-gradient(135deg, #fbbf24, #d97706); }
 .type-pill.type-dragon { background: linear-gradient(135deg, #a78bfa, #7c3aed); }
@@ -431,3 +430,32 @@ body.dark-mode .tier-pill.a-tier {
   background: rgba(22, 163, 74, 0.2);
   color: #4ade80;
 }
+
+/* Deck tiles are real buttons now: undo the browser's button styling. */
+button.deck-grid-item {
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+button.deck-grid-item:focus-visible {
+  outline: 3px solid #ff9500;
+  outline-offset: 3px;
+}
+
+.meta-empty {
+  padding: 48px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.meta-empty h3 { font-size: 1.4rem; font-weight: 800; }
+.meta-empty p { color: var(--text-muted); max-width: 420px; margin-bottom: 8px; }
+
+.type-pill.type-psychic { background: linear-gradient(135deg, #e879f9, #a21caf); }

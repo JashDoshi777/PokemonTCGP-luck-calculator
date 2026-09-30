@@ -1,11 +1,10 @@
+﻿import { fetchJson } from './http';
+import { getCoreCards } from './cardsCore';
+
 // Live meta tier-list, sourced from PocketDecks' community-run data pipeline
 // (refreshed from real match data roughly daily) instead of a hand-maintained list.
+// resolveDeck() below is defensive against a handful of individually-missing cards.
 const DECKS_URL = 'https://cdn.jsdelivr.net/gh/PocketDecks/pokemon-tcg-pocket-tier-list@main/public/data/best-decks.json';
-// Pinned to a major version (jsdelivr resolves "@5" to the newest 5.x.x release, so
-// this still tracks new sets) rather than "@latest", so an eventual major schema bump
-// upstream can't silently break this URL's path. resolveDeck() below is defensive
-// against a handful of individually-missing cards regardless.
-const CARDS_URL = 'https://cdn.jsdelivr.net/npm/pokemon-tcg-pocket-cards@5/data/v5/cards.core.min.json';
 // The card DB's own `image` field points at raw.githubusercontent.com, which is not meant
 // for hotlinking at volume and can hang/502 under load. jsdelivr mirrors the same repo
 // reliably, so rebuild the URL from the card id instead of trusting the raw field.
@@ -13,19 +12,23 @@ const CARD_IMAGE_CDN = 'https://cdn.jsdelivr.net/gh/PocketDecks/pokemon-tcg-pock
 
 const ENERGY_TYPES = ['Grass', 'Fire', 'Water', 'Lightning', 'Psychic', 'Fighting', 'Darkness', 'Metal', 'Dragon', 'Colorless'];
 
-async function fetchJson(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to fetch ${url}`);
-  return res.json();
+// "2:a1-001" -> { count: 2, id: 'a1-001' }; null for anything malformed.
+function parseCardRef(ref) {
+  if (typeof ref !== 'string') return null;
+  const [count, id] = ref.split(':');
+  const n = parseInt(count, 10);
+  return Number.isFinite(n) && n > 0 && id ? { count: n, id } : null;
 }
 
-function parseCardRef(ref) {
-  const [count, id] = ref.split(':');
-  return { count: parseInt(count, 10), id };
+// A card id is "<set>-<number>". Some set codes contain hyphens themselves, so split on the LAST one.
+function splitCardId(id) {
+  const dash = id.lastIndexOf('-');
+  return dash > 0 ? { setCode: id.slice(0, dash), number: id.slice(dash + 1) } : null;
 }
 
 function bestList(deck) {
-  return deck.lists.reduce((best, l) => (l.score > (best?.score ?? -Infinity) ? l : best), null);
+  if (!Array.isArray(deck?.lists)) return null;
+  return deck.lists.reduce((best, l) => (l && l.score > (best?.score ?? -Infinity) ? l : best), null);
 }
 
 // A deck's energy is the elemental type of its highest-point (usually the ex/Mega ex
@@ -34,11 +37,13 @@ function resolveDeck(deck, cardsById) {
   const list = bestList(deck);
   if (!list) return null;
 
-  const cardRefs = list.cards.map(parseCardRef);
+  if (!Array.isArray(list.cards)) return null;
+  const cardRefs = list.cards.map(parseCardRef).filter(Boolean);
   const resolvedCards = cardRefs.map(({ count, id }) => {
     const c = cardsById.get(id);
-    if (!c) return null;
-    const [setCode, number] = id.split('-');
+    const parts = c ? splitCardId(id) : null;
+    if (!c || !parts) return null;
+    const { setCode, number } = parts;
     return {
       name: c.name,
       count,
@@ -86,11 +91,26 @@ function resolveDeck(deck, cardsById) {
 }
 
 let cachedDecks = null;
+let inFlight = null;
 
-export async function getLiveMetaDecks() {
-  if (cachedDecks) return cachedDecks;
+// Loads (once) and returns the live S-tier decks. Failures and empty results are
+// never cached, so a retry really retries.
+export function getLiveMetaDecks() {
+  if (cachedDecks) return Promise.resolve(cachedDecks);
+  if (!inFlight) {
+    inFlight = loadLiveMetaDecks()
+      .then(decks => {
+        if (decks.length > 0) cachedDecks = decks;
+        return decks;
+      })
+      .finally(() => { inFlight = null; });
+  }
+  return inFlight;
+}
 
-  const [rawDecks, rawCards] = await Promise.all([fetchJson(DECKS_URL), fetchJson(CARDS_URL)]);
+async function loadLiveMetaDecks() {
+  const [rawDecks, rawCards] = await Promise.all([fetchJson(DECKS_URL, { retries: 1 }), getCoreCards()]);
+  if (!Array.isArray(rawDecks) || !Array.isArray(rawCards)) throw new Error('Unexpected meta data format');
   // Keep the first entry deterministically if the upstream DB ever has a
   // duplicate id, rather than silently letting a later one overwrite it.
   const cardsById = new Map();
@@ -98,7 +118,10 @@ export async function getLiveMetaDecks() {
     if (!cardsById.has(c.id)) cardsById.set(c.id, c);
   }
 
-  const resolved = rawDecks.map(d => resolveDeck(d, cardsById)).filter(Boolean);
+  // One malformed entry must not take the whole list down with it.
+  const resolved = rawDecks.map(d => {
+    try { return resolveDeck(d, cardsById); } catch (e) { console.warn('Skipping a meta deck that could not be read', e); return null; }
+  }).filter(Boolean);
 
   // Best (highest live meta score) deck per energy type = that type's current S-Tier pick.
   const byType = new Map();
@@ -107,8 +130,5 @@ export async function getLiveMetaDecks() {
     if (!current || deck.metaScore > current.metaScore) byType.set(deck.type, deck);
   }
 
-  const decks = ENERGY_TYPES.map(t => byType.get(t)).filter(Boolean);
-
-  cachedDecks = decks;
-  return decks;
+  return ENERGY_TYPES.map(t => byType.get(t)).filter(Boolean);
 }

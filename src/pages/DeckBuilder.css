@@ -394,3 +394,114 @@
   }
   .deck-pane .deck-name-input { font-size: 1.25rem; }
 }
+
+/* ===== Elements that used to be clickable <div>s and are now real <button>s ===== */
+button.catalog-card-wrapper,
+button.deck-slot,
+button.saved-deck-card {
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+button.saved-deck-card {
+  background: var(--glass-card-bg);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  width: 100%;
+}
+
+button.catalog-card-wrapper:focus-visible,
+button.deck-slot:focus-visible,
+button.saved-deck-card:focus-visible {
+  outline: 3px solid #ff9500;
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+
+.catalog-empty {
+  grid-column: 1 / -1;
+  padding: 16px 8px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+/* Inline messages (replace blocking alert() popups) */
+.deck-status {
+  margin-bottom: 20px;
+  padding: 12px 18px;
+  border-radius: 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.deck-status.error {
+  background: rgba(255, 59, 48, 0.1);
+  border: 1px solid rgba(255, 59, 48, 0.25);
+  color: #c4291f;
+}
+
+.deck-status.success {
+  background: rgba(48, 209, 88, 0.12);
+  border: 1px solid rgba(48, 209, 88, 0.3);
+  color: #1c8a3e;
+}
+
+body.dark-mode .deck-status.error { color: #ff6961; }
+body.dark-mode .deck-status.success { color: #4cd964; }
+
+.deck-editing-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: rgba(255, 149, 0, 0.12);
+  color: #b35c00;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.deck-editing-note button {
+  border: none;
+  background: none;
+  color: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Saved deck detail header */
+.saved-deck-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.saved-deck-title { text-align: right; min-width: 0; }
+
+.saved-deck-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+
+@media (max-width: 768px) {
+  .saved-deck-head { flex-direction: column; align-items: stretch; }
+  .saved-deck-title { text-align: left; }
+  .saved-deck-actions .btn-super { flex: 1; justify-content: center; }
+}

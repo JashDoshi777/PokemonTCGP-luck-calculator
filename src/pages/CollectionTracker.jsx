@@ -1,9 +1,9 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+﻿import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import PokemonCard from '../components/PokemonCard';
-import AppleSearchBar from '../components/AppleSearchBar';
 import { ChevronLeft, ChevronRight, Filter, CheckCircle2, Sparkles, Hand, MousePointer2, Search, X } from 'lucide-react';
 import { getEnergyMap, staticEnergyMapping } from '../services/EnergyMapService';
+import '../components/AppleSearchBar.css'; // styles for the search field used below
 import './CollectionTracker.css';
 
 const AppleProgressRing = ({ percentage, size = 100, stroke  = 8 }) => {
@@ -51,6 +51,8 @@ const AppleProgressRing = ({ percentage, size = 100, stroke  = 8 }) => {
   );
 };
 
+const CARDS_PER_BATCH = 60;
+
 const CollectionTracker = () => {
   const { cards, sets, collection, wishlist, toggleWishlist, updateCardCount, batchUpdateCollection, loading } = useAppContext();
   const [activeSet, setActiveSet] = useState('A1');
@@ -63,11 +65,16 @@ const CollectionTracker = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchActive, setIsSearchActive] = useState(false);
   const scrollRef = useRef(null);
-  const lastMouseTime = useRef(0);
   const draggedCardsRef = useRef(new Set());
+  // True between a pointer press that already counted and the click that follows
+  // it, so one physical press never adds two copies.
+  const pressHandledRef = useRef(false);
+  const sentinelRef = useRef(null);
 
   useEffect(() => {
-    getEnergyMap().then(setEnergyMapping);
+    let cancelled = false;
+    getEnergyMap().then(map => { if (!cancelled) setEnergyMapping(map); }).catch(() => {});
+    return () => { cancelled = true; };
   }, []);
 
   const toggleEnergyFilter = (type) => {
@@ -84,6 +91,8 @@ const CollectionTracker = () => {
     const handleMouseUpGlobal = () => {
       setIsDragging(false);
       draggedCardsRef.current.clear();
+      // The click for this press (if any) is dispatched right after mouseup; clear the flag once it has had its chance.
+      setTimeout(() => { pressHandledRef.current = false; }, 0);
     };
     window.addEventListener('mouseup', handleMouseUpGlobal);
     window.addEventListener('touchend', handleMouseUpGlobal);
@@ -175,30 +184,44 @@ const CollectionTracker = () => {
 
 
 
+  // Only part of a big set is drawn at first; more cards load as you scroll. Changing
+  // the set or any filter starts over from the first batch.
+  const filterKey = [activeSet, rarityFilter, energyFilters.join(','), ownershipFilter, searchQuery].join('|');
+  const [batch, setBatch] = useState({ key: filterKey, count: CARDS_PER_BATCH });
+  const visibleCount = batch.key === filterKey ? batch.count : CARDS_PER_BATCH;
+  const visibleCards = activeSetCards.slice(0, visibleCount);
+  const hasMore = visibleCount < activeSetCards.length;
+
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!hasMore || !node || typeof IntersectionObserver === 'undefined') return undefined;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some(entry => entry.isIntersecting)) {
+        setBatch({ key: filterKey, count: visibleCount + CARDS_PER_BATCH });
+      }
+    }, { rootMargin: '800px 0px' });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasMore, visibleCount, filterKey]);
+
   const getRarityDisplay = (r) => {
     if (r === 'All') return 'All';
-    if (r === 'UR') return <img src="/icons/crown.webp" alt="UR" style={{ height: '18px', objectFit: 'contain' }} />;
-    if (r === 'IM') return <img src="/icons/3star.webp" alt="IM" style={{ height: '18px', objectFit: 'contain' }} />;
-    if (r === 'SAR') return <img src="/icons/2star.webp" alt="SAR" style={{ height: '18px', objectFit: 'contain' }} />;
-    if (r === 'SR') return <img src="/icons/2star.webp" alt="SR" style={{ height: '18px', objectFit: 'contain' }} />;
-    if (r === 'AR') return <img src="/icons/1star.webp" alt="AR" style={{ height: '18px', objectFit: 'contain' }} />;
-    if (r === 'SSR') return <img src="/icons/s2.webp" alt="SSR" style={{ height: '18px', objectFit: 'contain' }} />;
-    if (r === 'S') return <img src="/icons/s1.webp" alt="S" style={{ height: '18px', objectFit: 'contain' }} />;
-    if (r === 'RR') return <img src="/icons/4d.webp" alt="RR" style={{ height: '18px', objectFit: 'contain' }} />;
-    if (r === 'R') return <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>{[...Array(3)].map((_, i) => <img key={i} src="/icons/diamond.png" style={{ height: '14px' }} />)}</div>;
-    if (r === 'U') return <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>{[...Array(2)].map((_, i) => <img key={i} src="/icons/diamond.png" style={{ height: '14px' }} />)}</div>;
-    if (r === 'C') return <img src="/icons/diamond.png" style={{ height: '14px' }} />;
+    if (r === 'UR') return <img src="/icons/crown.webp" alt="" style={{ height: '18px', objectFit: 'contain' }} />;
+    if (r === 'IM') return <img src="/icons/3star.webp" alt="" style={{ height: '18px', objectFit: 'contain' }} />;
+    if (r === 'SAR') return <img src="/icons/2star.webp" alt="" style={{ height: '18px', objectFit: 'contain' }} />;
+    if (r === 'SR') return <img src="/icons/2star.webp" alt="" style={{ height: '18px', objectFit: 'contain' }} />;
+    if (r === 'AR') return <img src="/icons/1star.webp" alt="" style={{ height: '18px', objectFit: 'contain' }} />;
+    if (r === 'SSR') return <img src="/icons/s2.webp" alt="" style={{ height: '18px', objectFit: 'contain' }} />;
+    if (r === 'S') return <img src="/icons/s1.webp" alt="" style={{ height: '18px', objectFit: 'contain' }} />;
+    if (r === 'RR') return <img src="/icons/4d.webp" alt="" style={{ height: '18px', objectFit: 'contain' }} />;
+    if (r === 'R') return <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>{[...Array(3)].map((_, i) => <img key={i} src="/icons/diamond.png" alt="" style={{ height: '14px' }} />)}</div>;
+    if (r === 'U') return <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>{[...Array(2)].map((_, i) => <img key={i} src="/icons/diamond.png" alt="" style={{ height: '14px' }} />)}</div>;
+    if (r === 'C') return <img src="/icons/diamond.png" alt="" style={{ height: '14px' }} />;
     return r;
   };
 
   const handleCardClick = (card) => {
     updateCardCount(`${card.set}-${card.number}`, 1);
-  };
-
-  const handleDragEnter = (card) => {
-    if (isDragging) {
-      updateCardCount(`${card.set}-${card.number}`, 1);
-    }
   };
 
   const allVisibleOwned = useMemo(() => {
@@ -214,25 +237,6 @@ const CollectionTracker = () => {
     } else {
       batchUpdateCollection(cardIds, 1);
     }
-  };
-
-  const handleSearchSelect = (card) => {
-    updateCardCount(`${card.set}-${card.number}`, 1);
-    setActiveSet(card.set);
-    setRarityFilter('All');
-
-    // Auto-scroll to the card after state updates and DOM renders
-    setTimeout(() => {
-      const el = document.getElementById(`card-${card.set}-${card.number}`);
-      if (el) {
-        // Calculate offset to ensure it's not hidden behind fixed headers
-        const y = el.getBoundingClientRect().top + window.scrollY - 150;
-        window.scrollTo({ top: y, behavior: 'smooth' });
-        // Optional: flash animation
-        el.classList.add('flash-highlight');
-        setTimeout(() => el.classList.remove('flash-highlight'), 1000);
-      }
-    }, 150);
   };
 
   if (loading) return <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>Loading Collection...</div>;
@@ -257,13 +261,16 @@ const CollectionTracker = () => {
               type="text"
               className="apple-search-input"
               placeholder="Search any card across all expansions..."
+              aria-label="Search any card across all expansions"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setIsSearchActive(true)}
               onBlur={() => setIsSearchActive(false)}
             />
             {searchQuery && (
-              <button 
+              <button
+                type="button"
+                aria-label="Clear search"
                 style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px', borderRadius: '50%', color: '#999' }}
                 onClick={() => setSearchQuery('')}
               >
@@ -280,7 +287,7 @@ const CollectionTracker = () => {
         <div className="set-selector">
           <h3 style={{ fontSize: '1.2rem', marginBottom: '16px' }}>Select Expansion</h3>
           <div className="carousel-wrapper" style={{ position: 'relative', padding: '0 50px' }}>
-            <button className="apple-carousel-nav left" onClick={() => scrollSets('left')}>
+            <button className="apple-carousel-nav left" onClick={() => scrollSets('left')} aria-label="Scroll expansions left">
               <ChevronLeft size={20} />
             </button>
             <div className="set-buttons" ref={scrollRef} style={{ scrollBehavior: 'smooth' }}>
@@ -288,6 +295,7 @@ const CollectionTracker = () => {
                 <button
                   key={set.code}
                   className={`set-btn ${activeSet === set.code ? 'active' : ''}`}
+                  aria-pressed={activeSet === set.code}
                   onClick={() => {
                     setActiveSet(set.code);
                     setRarityFilter('All');
@@ -298,7 +306,7 @@ const CollectionTracker = () => {
                 </button>
               ))}
             </div>
-            <button className="apple-carousel-nav right" onClick={() => scrollSets('right')}>
+            <button className="apple-carousel-nav right" onClick={() => scrollSets('right')} aria-label="Scroll expansions right">
               <ChevronRight size={20} />
             </button>
           </div>
@@ -313,6 +321,8 @@ const CollectionTracker = () => {
                   <button
                     key={r}
                     className={`rarity-btn ${rarityFilter === r ? 'active' : ''}`}
+                    aria-pressed={rarityFilter === r}
+                    aria-label={r === 'All' ? 'All rarities' : `Rarity ${r}`}
                     onClick={() => setRarityFilter(r)}
                   >
                     {getRarityDisplay(r)}
@@ -331,6 +341,8 @@ const CollectionTracker = () => {
                 <button
                   key={type}
                   className={`energy-btn ${isActive ? 'active' : ''}`}
+                  aria-pressed={isActive}
+                  aria-label={type === 'All' ? 'All energy types' : `${type} energy`}
                   onClick={() => toggleEnergyFilter(type)}
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -350,7 +362,7 @@ const CollectionTracker = () => {
                   }}
                   title={type}
                 >
-                  {type === 'All' ? 'All' : <img src={`/icons/energy_${type}.png`} alt={type} style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' }} />}
+                  {type === 'All' ? 'All' : <img src={`/icons/energy_${type}.png`} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' }} />}
                 </button>
                 );
               })}
@@ -360,6 +372,7 @@ const CollectionTracker = () => {
               <button
                 className={`select-all-btn paint-mode-toggle ${isPaintMode ? 'active' : ''}`}
                 onClick={() => setIsPaintMode(!isPaintMode)}
+                aria-pressed={isPaintMode}
                 title={isPaintMode ? "Disable Paint Mode" : "Enable Paint Mode"}
                 style={{ background: isPaintMode ? 'rgba(52, 199, 89, 0.15)' : '', color: isPaintMode ? '#34c759' : '' }}
               >
@@ -371,6 +384,7 @@ const CollectionTracker = () => {
                   <button
                     key={f}
                     className={`segmented-btn ${ownershipFilter === f ? 'active' : ''}`}
+                    aria-pressed={ownershipFilter === f}
                     onClick={() => setOwnershipFilter(f)}
                   >
                     {f}
@@ -406,15 +420,15 @@ const CollectionTracker = () => {
       >
         {activeSetCards.length === 0 ? (
           <div style={{ gridColumn: '1 / -1', padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: 500 }}>
-            {searchQuery 
+            {searchQuery
               ? `No cards found matching "${searchQuery}"`
-              : activeSet === 'WISHLIST' 
-                ? "Your wishlist is empty. Add cards by clicking the heart icon on any card!" 
+              : activeSet === 'WISHLIST'
+                ? "Your wishlist is empty. Add cards by clicking the heart icon on any card!"
                 : "No cards found in this selection."
             }
           </div>
         ) : (
-          activeSetCards.map((card) => {
+          visibleCards.map((card) => {
             const cardId = `${card.set}-${card.number}`;
             const count = collection[cardId] || 0;
             const isOwned = count > 0;
@@ -423,19 +437,26 @@ const CollectionTracker = () => {
                 key={cardId}
                 id={`card-${cardId}`}
                 className={`collection-card-wrapper ${isOwned ? 'owned' : 'missing'}`}
-                onPointerDown={(e) => {
-                  if (e.pointerType === 'touch') {
-                    if (isPaintMode) {
-                      e.preventDefault();
-                      setIsDragging(true);
-                      draggedCardsRef.current.clear();
-                      draggedCardsRef.current.add(cardId);
-                      handleCardClick(card);
-                    }
-                    return;
+                role="group"
+                tabIndex={0}
+                aria-label={`${card.name}, ${isOwned ? `${count} owned` : 'missing'}. Press Enter to add a copy or Backspace to remove one.`}
+                onKeyDown={(e) => {
+                  if (e.target !== e.currentTarget) return; // keys pressed on the inner buttons are theirs
+                  if (e.key === 'Enter' || e.key === ' ' || e.key === '+') {
+                    e.preventDefault();
+                    handleCardClick(card);
+                  } else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '-') {
+                    e.preventDefault();
+                    updateCardCount(cardId, -1);
                   }
-                  lastMouseTime.current = Date.now();
+                }}
+                onPointerDown={(e) => {
+                  // Only the primary button counts - right / middle clicks must not add cards.
+                  if (e.pointerType === 'mouse' && e.button !== 0) return;
+                  // A plain touch tap is handled by onClick; touch only acts here while painting.
+                  if (e.pointerType === 'touch' && !isPaintMode) return;
                   e.preventDefault();
+                  pressHandledRef.current = true;
                   setIsDragging(true);
                   draggedCardsRef.current.clear();
                   draggedCardsRef.current.add(cardId);
@@ -443,11 +464,9 @@ const CollectionTracker = () => {
                 }}
                 onPointerEnter={(e) => {
                   if (e.pointerType === 'touch') return;
-                  if (isDragging && e.buttons === 1) {
-                    if (!draggedCardsRef.current.has(cardId)) {
-                      draggedCardsRef.current.add(cardId);
-                      handleCardClick(card);
-                    }
+                  if (isDragging && e.buttons === 1 && !draggedCardsRef.current.has(cardId)) {
+                    draggedCardsRef.current.add(cardId);
+                    handleCardClick(card);
                   }
                 }}
                 onTouchMove={(e) => {
@@ -455,31 +474,22 @@ const CollectionTracker = () => {
                   e.preventDefault();
                   const touch = e.touches[0];
                   const element = document.elementFromPoint(touch.clientX, touch.clientY);
-                  if (element) {
-                    const wrapper = element.closest('.collection-card-wrapper');
-                    if (wrapper && wrapper.id) {
-                      // Split on the LAST hyphen, not the first - some set codes
-                      // (e.g. promo sets) contain hyphens themselves.
-                      const idWithoutPrefix = wrapper.id.replace('card-', '');
-                      const lastDash = idWithoutPrefix.lastIndexOf('-');
-                      if (lastDash > 0) {
-                        const set = idWithoutPrefix.slice(0, lastDash);
-                        const num = idWithoutPrefix.slice(lastDash + 1);
-                        const targetId = `${set}-${num}`;
-                        const hoveredCard = activeSetCards.find(c => c.set === set && c.number.toString() === num);
-                        if (hoveredCard && !draggedCardsRef.current.has(targetId)) {
-                          draggedCardsRef.current.add(targetId);
-                          updateCardCount(targetId, 1);
-                        }
-                      }
-                    }
+                  const wrapper = element?.closest('.collection-card-wrapper');
+                  if (!wrapper?.id) return;
+                  // wrapper ids look like "card-<set>-<number>"; split on the LAST hyphen since
+                  // some set codes (e.g. promo sets) contain hyphens themselves.
+                  const targetId = wrapper.id.replace('card-', '');
+                  if (targetId.lastIndexOf('-') > 0 && !draggedCardsRef.current.has(targetId)) {
+                    draggedCardsRef.current.add(targetId);
+                    updateCardCount(targetId, 1);
                   }
                 }}
-                onClick={(e) => {
-                  // Ignore clicks while in paint mode since onPointerDown handles it
-                  if (isPaintMode && e.nativeEvent.pointerType === 'touch') return; 
-                  
-                  if (Date.now() - lastMouseTime.current < 500) return;
+                onClick={() => {
+                  // The press that started this click already added a copy.
+                  if (pressHandledRef.current) {
+                    pressHandledRef.current = false;
+                    return;
+                  }
                   handleCardClick(card);
                 }}
               >
@@ -492,12 +502,14 @@ const CollectionTracker = () => {
                 {!isOwned && <div className="missing-overlay">Missing</div>}
                 {isOwned && (
                   <button
+                    type="button"
                     className="decrement-btn"
                     onPointerDown={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()} // Prevent drag start when clicking decrement
                     onTouchStart={(e) => e.stopPropagation()}
                     onClick={(e) => { e.stopPropagation(); updateCardCount(cardId, -1); }}
                     title="Remove one copy"
+                    aria-label={`Remove one copy of ${card.name}`}
                   >
                     -
                   </button>
@@ -505,6 +517,13 @@ const CollectionTracker = () => {
               </div>
             );
           })
+        )}
+        {hasMore && (
+          <div ref={sentinelRef} className="collection-more">
+            <button type="button" onClick={() => setBatch({ key: filterKey, count: visibleCount + CARDS_PER_BATCH })}>
+              Show more cards ({activeSetCards.length - visibleCount} left)
+            </button>
+          </div>
         )}
       </div>
     </div>

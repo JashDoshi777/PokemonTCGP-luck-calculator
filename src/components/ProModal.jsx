@@ -1,60 +1,29 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Check } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
+import { useDialog } from '../hooks/useDialog';
+import { getVisitorId } from '../utils/visitor';
+import { local } from '../utils/storage';
 import './LoginModal.css';
 import './ProModal.css';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
-const VISITOR_KEY = 'tcgp_visitor_id';
 const JOINED_CACHE_PREFIX = 'tcgp_pro_joined:';
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-let memoryVisitorId = null;
-
-function generateId() {
-  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
-  return Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-}
-
-// A random id kept in this browser so anonymous signups are counted once per
-// person. Falls back to a per-page-load id if storage is blocked.
-function getVisitorId() {
-  try {
-    let id = localStorage.getItem(VISITOR_KEY);
-    if (!id) {
-      id = generateId();
-      localStorage.setItem(VISITOR_KEY, id);
-    }
-    return id;
-  } catch {
-    if (!memoryVisitorId) memoryVisitorId = generateId();
-    return memoryVisitorId;
-  }
-}
 
 // The server is the source of truth for "already joined", but its round trip
 // takes a moment - remembering the last answer locally lets the popup render
 // the right state instantly instead of waiting on the network.
-function readJoinedCache(user) {
-  try {
-    return localStorage.getItem(JOINED_CACHE_PREFIX + (user || 'guest'));
-  } catch {
-    return null;
-  }
-}
+const readJoinedCache = (user) => local.get(JOINED_CACHE_PREFIX + (user || 'guest'));
 
-function writeJoinedCache(user, value) {
-  try {
-    const key = JOINED_CACHE_PREFIX + (user || 'guest');
-    if (value) localStorage.setItem(key, value);
-    else localStorage.removeItem(key);
-  } catch {
-    // storage unavailable - the server state still applies
-  }
-}
+const writeJoinedCache = (user, value) => {
+  const key = JOINED_CACHE_PREFIX + (user || 'guest');
+  if (value) local.set(key, value);
+  else local.remove(key);
+};
 
 const ProModal = ({ onClose, onRequestLogin }) => {
-  const { user, token } = useAppContext();
+  const { user, authFetch } = useAppContext();
+  const dialogRef = useDialog(onClose);
   const [visitorId] = useState(getVisitorId);
   const cached = readJoinedCache(user);
   const [joined, setJoined] = useState(!!cached);
@@ -62,6 +31,7 @@ const ProModal = ({ onClose, onRequestLogin }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [stats, setStats] = useState(null);
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const mounted = useRef(true);
 
   useEffect(() => {
@@ -69,11 +39,9 @@ const ProModal = ({ onClose, onRequestLogin }) => {
     return () => { mounted.current = false; };
   }, []);
 
-  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
-
-  const loadStatus = async () => {
+  const loadStatus = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/pro/waitlist/status?visitorId=${encodeURIComponent(visitorId)}`, { headers: authHeaders });
+      const res = await authFetch(`/pro/waitlist/status?visitorId=${encodeURIComponent(visitorId)}`);
       if (!res.ok) throw new Error('status request failed');
       const data = await res.json();
       if (!mounted.current) return;
@@ -85,14 +53,15 @@ const ProModal = ({ onClose, onRequestLogin }) => {
     } catch (e) {
       console.error('Could not load Pro waitlist status:', e);
     }
-  };
+  }, [authFetch, visitorId, user]);
 
   useEffect(() => {
     loadStatus();
-  }, [user, token]);
+  }, [loadStatus]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
     setError('');
 
     const cleanEmail = email.trim();
@@ -103,14 +72,14 @@ const ProModal = ({ onClose, onRequestLogin }) => {
 
     // Optimistic: show the confirmation right away and only roll back if the
     // request actually fails, so there's no waiting on the network.
+    setSubmitting(true);
     setJoined(true);
     writeJoinedCache(user, user ? cleanEmail : '1');
 
     try {
-      const res = await fetch(`${API_URL}/pro/waitlist`, {
+      const res = await authFetch('/pro/waitlist', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeaders },
-        body: JSON.stringify({ visitorId, email: user ? cleanEmail : undefined })
+        json: { visitorId, email: user ? cleanEmail : undefined }
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Something went wrong. Please try again.');
@@ -120,6 +89,8 @@ const ProModal = ({ onClose, onRequestLogin }) => {
       setJoined(false);
       writeJoinedCache(user, null);
       setError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      if (mounted.current) setSubmitting(false);
     }
   };
 
@@ -129,15 +100,22 @@ const ProModal = ({ onClose, onRequestLogin }) => {
   };
 
   return (
-    <div className="login-modal-overlay pro-modal-overlay" onClick={onClose}>
-      <div className="login-modal-container pro-modal-container" onClick={e => e.stopPropagation()}>
+    <div className="login-modal-overlay pro-modal-overlay" data-lenis-prevent onClick={onClose}>
+      <div
+        className="login-modal-container pro-modal-container"
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pro-modal-title"
+        onClick={e => e.stopPropagation()}
+      >
         <button className="login-modal-close" onClick={onClose} aria-label="Close">
           <X size={18} />
         </button>
 
         <div className="login-modal-header">
           <div className="pro-modal-badge">PRO</div>
-          <h2>Pro is coming soon</h2>
+          <h2 id="pro-modal-title">Pro is coming soon</h2>
           <p>Extra tools for serious collectors and traders.</p>
         </div>
 
@@ -162,14 +140,18 @@ const ProModal = ({ onClose, onRequestLogin }) => {
             </div>
           ) : (
             <form onSubmit={handleSubmit}>
-              {error && <div className="auth-error-msg">{error}</div>}
+              {error && <div className="auth-error-msg" role="alert">{error}</div>}
 
               {user ? (
                 <div className="apple-input-group">
                   <input
                     type="email"
+                    name="email"
                     className="apple-input"
                     placeholder="Your email address"
+                    aria-label="Your email address"
+                    autoComplete="email"
+                    maxLength={254}
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     required
@@ -183,7 +165,7 @@ const ProModal = ({ onClose, onRequestLogin }) => {
                 </div>
               )}
 
-              <button type="submit" className="apple-btn-primary">
+              <button type="submit" className="apple-btn-primary" disabled={submitting}>
                 Let me know when it's live
               </button>
             </form>

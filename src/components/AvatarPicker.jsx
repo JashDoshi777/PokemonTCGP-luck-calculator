@@ -1,6 +1,7 @@
 ﻿import React, { useState, useMemo } from 'react';
 import { X, Shuffle } from 'lucide-react';
 import PokemonAvatar from './PokemonAvatar';
+import { useDialog } from '../hooks/useDialog';
 import {
   AVATAR_BACKGROUNDS,
   GENERATIONS,
@@ -12,6 +13,7 @@ import './LoginModal.css';
 import './AvatarPicker.css';
 
 const AvatarPicker = ({ current, name, onSave, onClose }) => {
+  const dialogRef = useDialog(onClose);
   const [pokemon, setPokemon] = useState(current.pokemon);
   const [bg, setBg] = useState(current.bg);
   const [genIndex, setGenIndex] = useState(() => GENERATIONS.indexOf(generationOf(current.pokemon)));
@@ -33,7 +35,14 @@ const AvatarPicker = ({ current, name, onSave, onClose }) => {
 
   return (
     <div className="login-modal-overlay avatar-picker-overlay" data-lenis-prevent onClick={onClose}>
-      <div className="login-modal-container avatar-picker-container" onClick={e => e.stopPropagation()}>
+      <div
+        className="login-modal-container avatar-picker-container"
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Choose your avatar"
+        onClick={e => e.stopPropagation()}
+      >
         <button className="login-modal-close" onClick={onClose} aria-label="Close">
           <X size={18} />
         </button>
@@ -53,6 +62,7 @@ const AvatarPicker = ({ current, name, onSave, onClose }) => {
                 key={color}
                 type="button"
                 className={`avatar-picker-swatch ${bg === color ? 'selected' : ''}`}
+                aria-pressed={bg === color}
                 style={{ background: color }}
                 onClick={() => setBg(color)}
                 aria-label={`Background ${color}`}
@@ -60,13 +70,14 @@ const AvatarPicker = ({ current, name, onSave, onClose }) => {
             ))}
           </div>
 
-          <div className="avatar-picker-label">PokÃ©mon</div>
+          <div className="avatar-picker-label">Pokémon</div>
           <div className="avatar-picker-gens">
             {GENERATIONS.map((g, i) => (
               <button
                 key={g.label}
                 type="button"
                 className={`avatar-picker-gen ${i === genIndex ? 'active' : ''}`}
+                aria-pressed={i === genIndex}
                 onClick={() => setGenIndex(i)}
               >
                 Gen {g.label}
@@ -80,9 +91,10 @@ const AvatarPicker = ({ current, name, onSave, onClose }) => {
                 key={id}
                 type="button"
                 className={`avatar-picker-cell ${id === pokemon ? 'selected' : ''}`}
+                aria-pressed={id === pokemon}
                 onClick={() => setPokemon(id)}
                 title={`#${id}`}
-                aria-label={`PokÃ©dex #${id}`}
+                aria-label={`Pokédex #${id}`}
               >
                 <img src={spriteUrl(id)} alt="" loading="lazy" width="56" height="56" draggable={false} />
               </button>

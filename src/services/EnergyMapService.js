@@ -1,20 +1,17 @@
 import staticEnergyMapping from '../data/energy_mapping.json';
+import { getCoreCards } from './cardsCore';
 
 // The bundled energy_mapping.json is a hand-generated, point-in-time snapshot
-// that goes stale every time a new set ships. This fetches the live, actively
-// maintained card database (same source used for Meta Decks) and derives a
-// complete, always-current name -> elemental type map instead.
-const CARDS_URL = 'https://cdn.jsdelivr.net/npm/pokemon-tcg-pocket-cards@5/data/v5/cards.core.min.json';
-
+// that goes stale every time a new set ships. This reads the live, actively
+// maintained card database (shared with Meta Decks, downloaded once) and derives
+// a complete, always-current name -> elemental type map instead.
 let cachedMap = null;
 
 export async function getEnergyMap() {
   if (cachedMap) return cachedMap;
 
   try {
-    const res = await fetch(CARDS_URL);
-    if (!res.ok) throw new Error('Failed to fetch card energy data');
-    const cards = await res.json();
+    const cards = await getCoreCards();
 
     const liveMap = {};
     for (const c of cards) {
@@ -24,11 +21,13 @@ export async function getEnergyMap() {
     // Live data wins where it disagrees with the static snapshot; the static
     // map only fills gaps if the live fetch is ever missing something.
     cachedMap = { ...staticEnergyMapping, ...liveMap };
-  } catch {
-    cachedMap = staticEnergyMapping;
+    return cachedMap;
+  } catch (error) {
+    // Offline or the CDN is down: the bundled snapshot is good enough. It is not
+    // cached as "the answer", so a later call tries the live data again.
+    console.warn('Using the bundled energy map; live data unavailable', error);
+    return staticEnergyMapping;
   }
-
-  return cachedMap;
 }
 
 export { staticEnergyMapping };

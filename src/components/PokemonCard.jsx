@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
 import './PokemonCard.css';
 
@@ -33,23 +33,25 @@ const PokemonCard = ({ card, count, isWishlisted, onToggleWishlist }) => {
             src={imgUrl} 
             alt={card.name} 
             loading="lazy"
+            decoding="async"
             onError={() => setImgError(true)}
           />
         )}
         <div className="card-glare"></div>
       </div>
-      {count && (
-        <div className="card-count-badge">x{count}</div>
-      )}
+      {count ? <div className="card-count-badge">x{count}</div> : null}
       {onToggleWishlist && (
-        <button 
+        <button
+          type="button"
+          aria-label={isWishlisted ? `Remove ${card.name} from wishlist` : `Add ${card.name} to wishlist`}
+          aria-pressed={!!isWishlisted}
           className={`card-wishlist-btn ${isWishlisted ? 'active' : ''}`}
           onPointerDown={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
           onClick={(e) => { e.stopPropagation(); onToggleWishlist(); }}
         >
-          <Heart size={16} fill={isWishlisted ? "#ff3b30" : "none"} color={isWishlisted ? "#ff3b30" : "white"} />
+          <Heart size={16} fill={isWishlisted ? "#ff3b30" : "none"} color={isWishlisted ? "#ff3b30" : "white"} aria-hidden="true" />
         </button>
       )}
     </div>

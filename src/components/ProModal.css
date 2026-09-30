@@ -1,9 +1,4 @@
-/* Sits above the fixed nav, theme toggle and Pro pill (all z-index 2000) */
-.login-modal-overlay.pro-modal-overlay {
-  z-index: 2100;
-}
-
-.pro-modal-badge {
+﻿.pro-modal-badge {
   display: inline-flex;
   align-items: center;
   padding: 5px 12px;

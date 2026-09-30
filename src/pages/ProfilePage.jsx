@@ -1,12 +1,17 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Pencil, Star } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import PokemonAvatar from '../components/PokemonAvatar';
 import AvatarPicker from '../components/AvatarPicker';
+import AdminDashboard from '../components/AdminDashboard';
+import { AVATAR_BACKGROUNDS, isValidAvatar } from '../data/avatars';
 import './ProfilePage.css';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Used only if the account's avatar hasn't loaded yet, so the picker can always open.
+const FALLBACK_AVATAR = { pokemon: 25, bg: AVATAR_BACKGROUNDS[5] };
 
 const RARITY_TILES = [
   { key: 'crown', label: 'Crown Rare', icon: '/icons/crown.webp', codes: ['UR'] },
@@ -29,6 +34,14 @@ const ProfilePage = ({ onRequestLogin, isActive = true }) => {
   const [dirty, setDirty] = useState(false);
   const [notice, setNotice] = useState(null); // { type: 'success' | 'error', text }
   const [showPicker, setShowPicker] = useState(false);
+  // Admins get a Profile | Dashboard switch; the choice is remembered for the session.
+  const [tab, setTab] = useState(() => {
+    try { return sessionStorage.getItem('tcgp_profile_tab') === 'dashboard' ? 'dashboard' : 'profile'; } catch { return 'profile'; }
+  });
+  const switchTab = (next) => {
+    setTab(next);
+    try { sessionStorage.setItem('tcgp_profile_tab', next); } catch { /* ignore */ }
+  };
 
   // Pull fresh account data whenever this tab is opened (e.g. after a Calculator run).
   useEffect(() => {
@@ -128,8 +141,19 @@ const ProfilePage = ({ onRequestLogin, isActive = true }) => {
   const memberSince = formatMonth(profile?.createdAt);
   const tradeCounts = profile?.tradeCounts || { offering: 0, requesting: 0 };
 
+  const showDashboard = !!profile?.isAdmin && tab === 'dashboard';
+
   return (
     <div className="profile-page animate-enter">
+      {profile?.isAdmin && (
+        <div className="apple-segmented-control adm-switch" role="tablist" aria-label="Profile or admin dashboard">
+          <button role="tab" aria-selected={tab === 'profile'} className={`segmented-btn ${tab === 'profile' ? 'active' : ''}`} onClick={() => switchTab('profile')}>Profile</button>
+          <button role="tab" aria-selected={tab === 'dashboard'} className={`segmented-btn ${tab === 'dashboard' ? 'active' : ''}`} onClick={() => switchTab('dashboard')}>Dashboard</button>
+        </div>
+      )}
+
+      {showDashboard ? <AdminDashboard /> : (
+      <>
       <div className="glass-panel profile-hero">
         <button className="profile-avatar-btn" onClick={() => setShowPicker(true)} aria-label="Change avatar">
           <PokemonAvatar avatar={profile?.avatar} name={user} size={128} />
@@ -243,14 +267,16 @@ const ProfilePage = ({ onRequestLogin, isActive = true }) => {
       {/* Portalled to <body>: this page fades in with a transform, which would
           otherwise make the fixed-position popup align to the page column
           instead of the screen. */}
-      {showPicker && profile?.avatar && createPortal(
+      {showPicker && createPortal(
         <AvatarPicker
-          current={profile.avatar}
+          current={isValidAvatar(profile?.avatar) ? profile.avatar : FALLBACK_AVATAR}
           name={user}
           onSave={handleSaveAvatar}
           onClose={() => setShowPicker(false)}
         />,
         document.body
+      )}
+      </>
       )}
     </div>
   );

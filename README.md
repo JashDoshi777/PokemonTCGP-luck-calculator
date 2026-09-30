@@ -106,17 +106,20 @@ A clean, full-stack architecture built for scaling:
 
 ```text
 ├── netlify/
-│   ├── functions/         # Express.js Serverless API endpoints (api.js)
-│   └── netlify.toml       # Serverless & routing deployment configuration
-├── public/                # Static assets, high-res rarity symbols, images
+│   └── functions/
+│       └── api.js         # Express API (auth, sync, trading, chat, admin analytics)
+├── netlify.toml           # Build, routing, security headers (CSP) and caching
+├── public/                # Static assets, rarity symbols, images
 ├── src/
-│   ├── components/        # Reusable UI (PokemonCard, AppleSearchBar, LoginModal)
-│   ├── context/           # AppContext (Auth state, Cards DB, API sync logic)
-│   ├── pages/             # Main Views (DeckBuilder, CollectionTracker, MetaDecks)
-│   ├── data/              # Static meta decks, packs configs, and rarities
-│   ├── math.js            # Probability engine & Z-Score algorithm
-│   ├── index.css          # Global styling, design tokens, responsive queries
-│   └── App.jsx            # Main view router & App Shell
+│   ├── components/        # Reusable UI (nav, modals, avatars, admin dashboard)
+│   ├── context/           # AppContext: session, cloud sync, card catalog
+│   ├── hooks/             # useDialog (Escape / focus trap for modals)
+│   ├── pages/             # Views: Landing, Calculator, Dex, Meta, Decks, Collection, Trading, Profile
+│   ├── services/          # Data loading (card DB, packs, meta decks) and analytics
+│   ├── utils/             # Safe storage + anonymous visitor id helpers
+│   ├── data/              # Packs, rarities and avatar configuration
+│   ├── math.js            # Probability engine & luck score
+│   └── App.jsx            # App shell: navigation, modals, lazy-loaded pages
 ├── index.html             # Application entry point
 └── package.json           # Project dependencies
 ```
@@ -140,14 +143,12 @@ Want to run the Companion on your local machine? It's fully equipped for full-st
 
 3. **Database Setup (PostgreSQL)**
    - You will need a PostgreSQL database (e.g., Neon, Supabase, or a local instance).
-   - Create a `.env` file in the root directory:
-     ```env
-     DATABASE_URL=postgres://user:password@host:port/dbname
-     JWT_SECRET=your_super_secret_key_here
-     RUN_LOCAL=true
-     PORT=3001
+   - Copy `.env.example` to `.env` and fill it in (`DATABASE_URL`, `JWT_SECRET`, `ADMIN_SECRET`, `ADMIN_USERNAMES`).
+   - Start the dev server (step 4), then create / upgrade the database tables (safe to re-run any time):
+     ```bash
+     curl -X POST http://localhost:5173/api/init -H "X-Admin-Secret: <your ADMIN_SECRET>"
      ```
-   - Start the backend and initialize the database tables by visiting `http://localhost:3001/api/init` in your browser.
+   - On Netlify, set the same variables in the site settings and run the same request once against your site URL after each deploy that changes the schema.
 
 4. **Start the Development Server**
    ```bash

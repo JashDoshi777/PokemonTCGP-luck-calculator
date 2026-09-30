@@ -1,10 +1,7 @@
-.login-modal-overlay.avatar-picker-overlay {
-  z-index: 2100;
-}
-
-.avatar-picker-container {
+﻿.avatar-picker-container {
   max-width: 560px;
   max-height: 92vh;
+  max-height: calc(100dvh - 32px);
   display: flex;
   flex-direction: column;
 }

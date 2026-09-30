@@ -335,7 +335,7 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
   transform: scale(0.92);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .ios-back-btn {
     top: 24px;
     left: 80px;
@@ -771,15 +771,10 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
     flex: 0 0 auto !important;
     margin-bottom: 40px !important; /* Push phone further down so text has breathing room */
   }
-  .pin-text > div {
-    height: 280px !important; /* Room for massive wrapped text */
-  }
   .pin-image-container {
     height: auto !important;
     flex: 1 !important;
     align-items: flex-start !important;
-    transform: scale(0.70) !important; /* Scale down a bit more to ensure it fits below the text */
-    transform-origin: top center !important;
   }
 
   /* Global Container Paddings */
@@ -1240,7 +1235,8 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
   }
 }
 
-@media (max-width: 768px) {
+/* Slide-out menu: phones and small tablets (the pill bar needs ~900px to fit beside the Pro and theme buttons). */
+@media (max-width: 900px) {
   /* Mobile Menu Toggle Button */
   .mobile-menu-toggle {
     display: flex;
@@ -1341,6 +1337,29 @@ button:active, .nav-pill:active, .btn-super:active, .stepper-btn:active {
     font-size: 1.05rem !important;
   }
 
+  /* The floating Pro / theme buttons would sit on top of the open menu. */
+  body.menu-open .pro-nav-btn,
+  body.menu-open .theme-toggle-btn {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+/* Mid-size screens: keep the pill bar to the left of the Pro and theme buttons. */
+@media (min-width: 901px) and (max-width: 1140px) {
+  .nav-ultra {
+    left: 20px;
+    transform: none;
+    width: auto;
+    max-width: calc(100vw - 210px);
+  }
+  .nav-pill {
+    padding: 9px 14px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 768px) {
   /* Glass Panels Mobile */
   .glass-panel {
     padding: 20px !important;
@@ -1953,4 +1972,131 @@ body.dark-mode .ios-card {
   .layout-grid:not(.ios-mode) .data-card td { padding: 10px 12px !important; }
   .calc-empty { padding: 36px 8px !important; font-size: 1rem !important; }
   .layout-grid:not(.ios-mode) > div:last-child { scroll-margin-top: 76px; }
+}
+
+/* ===== App shell ===== */
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 4000;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: #1d1d1f;
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+  transform: translateY(-200%);
+  transition: transform 0.2s ease;
+}
+
+.skip-link:focus { transform: translateY(0); }
+
+.page-loader {
+  padding: 80px 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* Calculator: message under the Evaluate button (replaces a blocking alert) */
+.calc-notice {
+  min-height: 1.2em;
+  margin-top: 10px;
+  text-align: center;
+  color: #c4291f;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+body.dark-mode .calc-notice { color: #ff6961; }
+
+/* Keyboard focus rings for the controls that use icon-only or custom styling */
+.nav-pill:focus-visible,
+.nav-avatar-btn:focus-visible,
+.pro-nav-btn:focus-visible,
+.theme-toggle-btn:focus-visible,
+.mobile-menu-toggle:focus-visible,
+.ios-back-btn:focus-visible,
+.btn-super:focus-visible,
+.stepper-btn:focus-visible,
+.segmented-btn:focus-visible,
+.rarity-btn:focus-visible,
+.set-btn:focus-visible,
+.energy-btn:focus-visible,
+.select-all-btn:focus-visible,
+.ios-close-btn:focus-visible {
+  outline: 3px solid #ff9500;
+  outline-offset: 2px;
+}
+
+.stepper-input:focus-visible {
+  outline: none; /* the surrounding stepper pill shows focus instead */
+}
+
+.stepper-ultra:focus-within {
+  box-shadow: 0 0 0 3px rgba(255, 149, 0, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-blob, .floating-card, .animate-enter { animation: none !important; }
+  .app-view-container { transition: none; }
+}
+
+.app-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 12px 18px;
+  border-radius: 16px;
+  background: rgba(255, 149, 0, 0.12);
+  border: 1px solid rgba(255, 149, 0, 0.3);
+  color: #b35c00;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+body.dark-mode .app-banner { color: #ffb340; }
+
+.app-banner button {
+  border: none;
+  background: rgba(128, 128, 140, 0.2);
+  color: inherit;
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ===== Touch devices: comfortable tap targets (mouse layouts are untouched) ===== */
+@media (pointer: coarse) {
+  .stepper-btn {
+    width: 40px !important;
+    height: 40px !important;
+  }
+  /* wide enough for two 40px buttons and a readable number */
+  .stepper-ultra { min-width: 150px; }
+  .layout-grid:not(.ios-mode) .rarity-grid > .glass-card > .stepper-ultra { width: auto !important; min-width: 150px; }
+
+  .rarity-btn,
+  .segmented-btn,
+  .set-btn,
+  .select-all-btn,
+  .nav-pill,
+  .ios-back-btn {
+    min-height: 40px;
+  }
+
+  .apple-search-input { min-height: 40px; }
+  .energy-btn { min-width: 40px; min-height: 40px; }
+
+  .decrement-btn,
+  .card-wishlist-btn,
+  .card-count-badge {
+    /* stay inside the card corners but get a larger invisible hit area */
+    touch-action: manipulation;
+  }
 }

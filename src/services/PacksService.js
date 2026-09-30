@@ -30,7 +30,24 @@ export function packArtCandidates(code) {
 
 function formatReleaseDate(isoDate) {
   const d = new Date(isoDate);
-  return d.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+  return Number.isNaN(d.getTime()) ? 'TBA' : d.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+}
+
+const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+
+// Sort key for a pack. Curated packs only carry a label like "Oct 2024", which
+// `new Date('Oct 2024')` parses in Chrome but NOT in Safari, so read it by hand.
+function releaseTime(pack) {
+  if (pack.releaseDate) {
+    const t = Date.parse(pack.releaseDate);
+    if (!Number.isNaN(t)) return t;
+  }
+  const match = /^([A-Za-z]{3})[a-z]*\.?\s+(\d{4})$/.exec(String(pack.date || '').trim());
+  if (match) {
+    const month = MONTHS.indexOf(match[1].toLowerCase());
+    if (month !== -1) return Date.UTC(Number(match[2]), month, 1);
+  }
+  return Number.MAX_SAFE_INTEGER; // undated packs go last
 }
 
 function isSlotsObject(slots) {
@@ -155,12 +172,11 @@ export async function getAllPacks() {
     }
   }
 
-  const merged = [...PACKS, ...autoPacks].sort((a, b) => {
-    const da = a.releaseDate ? new Date(a.releaseDate) : new Date(a.date);
-    const db = b.releaseDate ? new Date(b.releaseDate) : new Date(b.date);
-    return da - db;
-  });
+  const merged = [...PACKS, ...autoPacks].sort((a, b) => releaseTime(a) - releaseTime(b));
 
-  cachedPacks = merged;
+  // Only remember the result when both live sources answered. Otherwise new sets
+  // are missing (or their shiny/guaranteed-ex flags are wrong), and caching that
+  // would leave the partial list stuck until the page is reloaded.
+  if (sets && pullRates) cachedPacks = merged;
   return merged;
 }
