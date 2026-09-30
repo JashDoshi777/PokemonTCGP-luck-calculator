@@ -16,6 +16,7 @@ import DeckBuilder from './pages/DeckBuilder';
 import CollectionTracker from './pages/CollectionTracker';
 import TradingCenter from './pages/TradingCenter';
 import LoginModal from './components/LoginModal';
+import ProModal from './components/ProModal';
 import PackImage from './components/PackImage';
 import { useAppContext } from './context/AppContext';
 
@@ -33,6 +34,7 @@ function safeJSONParse(raw, fallback) {
 function AppContent() {
   const { user, logout } = useAppContext();
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showProModal, setShowProModal] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [theme, setTheme] = useState(() => {
@@ -69,13 +71,13 @@ function AppContent() {
   }, [theme]);
 
   useEffect(() => {
-    if (dexSelectedPack || showLoginModal) {
+    if (dexSelectedPack || showLoginModal || showProModal) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
     }
     return () => { document.body.style.overflow = ''; };
-  }, [dexSelectedPack, showLoginModal]);
+  }, [dexSelectedPack, showLoginModal, showProModal]);
 
   const handleSetView = (newView) => {
     setIsMobileMenuOpen(false);
@@ -125,6 +127,10 @@ function AppContent() {
         <div className="ambient-blob blob-2"></div>
         <div className="ambient-blob blob-3"></div>
       </div>
+
+      <button className="pro-nav-btn" onClick={() => setShowProModal(true)} aria-label="About Pro">
+        Pro
+      </button>
 
       <button className="theme-toggle-btn" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label="Toggle Dark Mode">
         {theme === 'dark' ? (
@@ -281,6 +287,7 @@ function AppContent() {
       </div>
 
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
+      {showProModal && <ProModal onClose={() => setShowProModal(false)} onRequestLogin={() => setShowLoginModal(true)} />}
     </>
   );
 }

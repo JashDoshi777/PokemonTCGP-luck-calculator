@@ -34,29 +34,55 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Basic in-memory brute-force guard for auth routes. Not durable across cold
-// starts/instances in a real serverless deployment, but still meaningfully
-// slows down naive automated credential-stuffing against a single instance.
-const authAttempts = new Map();
-const rateLimitAuth = (req, res, next) => {
-  // Behind Netlify's proxy req.ip/req.socket typically reflect an internal
-  // address rather than the real client, so prefer the forwarded header
-  // (its first entry is the original client) and only fall back to req.ip
-  // for local/direct-connection dev.
-  const forwardedFor = req.headers['x-forwarded-for'];
-  const key = (forwardedFor ? forwardedFor.split(',')[0].trim() : null) || req.ip || 'unknown';
-  const now = Date.now();
-  const windowMs = 60 * 1000;
-  const maxAttempts = 10;
+// Like authenticateToken, but anonymous visitors are allowed through: a valid
+// token sets req.user, a missing/invalid one just leaves it undefined.
+const optionalAuth = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return next();
 
-  const attempts = (authAttempts.get(key) || []).filter(t => now - t < windowMs);
-  if (attempts.length >= maxAttempts) {
-    return res.status(429).json({ error: "Too many attempts, please try again shortly" });
-  }
-  attempts.push(now);
-  authAttempts.set(key, attempts);
-  next();
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (!err) req.user = user;
+    next();
+  });
 };
+
+// Admins are identified server-side by username (from the signed JWT) against
+// the ADMIN_USERNAMES env var - never by anything the client sends. Fails
+// closed if the env var isn't set.
+const isAdminUser = (user) => {
+  if (!user?.username || !process.env.ADMIN_USERNAMES) return false;
+  const admins = process.env.ADMIN_USERNAMES.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+  return admins.includes(user.username.toLowerCase());
+};
+
+// Basic in-memory rate limiter. Not durable across cold starts/instances in a
+// real serverless deployment, but still meaningfully slows down naive
+// automated abuse against a single instance. Each limiter gets its own bucket
+// map so, e.g., waitlist spam can't lock anyone out of logging in.
+const createRateLimiter = ({ maxAttempts, windowMs }) => {
+  const attemptsByKey = new Map();
+  return (req, res, next) => {
+    // Behind Netlify's proxy req.ip/req.socket typically reflect an internal
+    // address rather than the real client, so prefer the forwarded header
+    // (its first entry is the original client) and only fall back to req.ip
+    // for local/direct-connection dev.
+    const forwardedFor = req.headers['x-forwarded-for'];
+    const key = (forwardedFor ? forwardedFor.split(',')[0].trim() : null) || req.ip || 'unknown';
+    const now = Date.now();
+
+    const attempts = (attemptsByKey.get(key) || []).filter(t => now - t < windowMs);
+    if (attempts.length >= maxAttempts) {
+      return res.status(429).json({ error: "Too many attempts, please try again shortly" });
+    }
+    attempts.push(now);
+    attemptsByKey.set(key, attempts);
+    next();
+  };
+};
+
+const rateLimitAuth = createRateLimiter({ maxAttempts: 10, windowMs: 60 * 1000 });
+const rateLimitWaitlist = createRateLimiter({ maxAttempts: 20, windowMs: 60 * 1000 });
 
 // A non-numeric :userId would otherwise hit a raw integer-column comparison
 // deep in a query and bubble up as an opaque 500 - reject it cleanly upfront.
@@ -171,6 +197,21 @@ app.get('/api/init', async (req, res) => {
         UNIQUE(endorser_id, endorsed_id)
       );
     `);
+
+    // "Notify me when Pro launches" signups. A row is either a logged-in user
+    // (user_id + email) or an anonymous visitor (visitor_id only); the partial
+    // unique indexes keep each person to a single row.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS pro_waitlist (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
+        visitor_id VARCHAR(64),
+        email VARCHAR(254),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS pro_waitlist_user_unique ON pro_waitlist (user_id) WHERE user_id IS NOT NULL;`);
+    await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS pro_waitlist_visitor_unique ON pro_waitlist (visitor_id) WHERE visitor_id IS NOT NULL;`);
 
     res.json({ message: "Database initialized successfully" });
   } catch (error) {
@@ -485,6 +526,117 @@ app.post('/api/trade/endorse/:userId', authenticateToken, validateUserIdParam, a
     } else {
       res.status(400).json({ error: "Already endorsed this user" });
     }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Pro waitlist ("notify me when Pro launches")
+const VISITOR_ID_PATTERN = /^[A-Za-z0-9-]{8,64}$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const getWaitlistStats = async () => {
+  const result = await pool.query(`
+    SELECT COUNT(*) AS total,
+           COUNT(user_id) AS registered,
+           COUNT(*) FILTER (WHERE user_id IS NULL) AS anonymous,
+           COUNT(*) FILTER (WHERE created_at > CURRENT_TIMESTAMP - INTERVAL '7 days') AS last_7_days
+    FROM pro_waitlist
+  `);
+  const row = result.rows[0];
+  return {
+    total: parseInt(row.total, 10),
+    registered: parseInt(row.registered, 10),
+    anonymous: parseInt(row.anonymous, 10),
+    last7Days: parseInt(row.last_7_days, 10)
+  };
+};
+
+// Logged-in users must supply an email (accounts don't store one); anonymous
+// visitors are recorded by their browser-generated visitor id only.
+app.post('/api/pro/waitlist', rateLimitWaitlist, optionalAuth, async (req, res) => {
+  try {
+    const { visitorId, email } = req.body || {};
+    const hasVisitorId = typeof visitorId === 'string' && VISITOR_ID_PATTERN.test(visitorId);
+
+    if (req.user) {
+      const cleanEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+      if (!cleanEmail || cleanEmail.length > 254 || !EMAIL_PATTERN.test(cleanEmail)) {
+        return res.status(400).json({ error: "Please enter a valid email address" });
+      }
+
+      const existing = await pool.query('SELECT id FROM pro_waitlist WHERE user_id = $1', [req.user.id]);
+      if (existing.rows.length > 0) {
+        await pool.query('UPDATE pro_waitlist SET email = $1 WHERE user_id = $2', [cleanEmail, req.user.id]);
+        return res.json({ success: true, alreadyJoined: true });
+      }
+
+      // If this browser already joined anonymously, attach the account + email
+      // to that row instead of counting the same person twice.
+      if (hasVisitorId) {
+        const upgraded = await pool.query(
+          'UPDATE pro_waitlist SET user_id = $1, email = $2 WHERE visitor_id = $3 AND user_id IS NULL RETURNING id',
+          [req.user.id, cleanEmail, visitorId]
+        );
+        if (upgraded.rows.length > 0) return res.json({ success: true, alreadyJoined: false });
+      }
+
+      // The visitor id may already belong to a different account on a shared browser.
+      let visitorIdForInsert = hasVisitorId ? visitorId : null;
+      if (visitorIdForInsert) {
+        const taken = await pool.query('SELECT 1 FROM pro_waitlist WHERE visitor_id = $1', [visitorIdForInsert]);
+        if (taken.rows.length > 0) visitorIdForInsert = null;
+      }
+      await pool.query(
+        'INSERT INTO pro_waitlist (user_id, visitor_id, email) VALUES ($1, $2, $3)',
+        [req.user.id, visitorIdForInsert, cleanEmail]
+      );
+      return res.json({ success: true, alreadyJoined: false });
+    }
+
+    if (!hasVisitorId) return res.status(400).json({ error: "Invalid visitor id" });
+
+    const inserted = await pool.query(
+      'INSERT INTO pro_waitlist (visitor_id) VALUES ($1) ON CONFLICT DO NOTHING RETURNING id',
+      [visitorId]
+    );
+    return res.json({ success: true, alreadyJoined: inserted.rowCount === 0 });
+  } catch (error) {
+    // A concurrent double-submit can trip the unique indexes - that just means "already joined".
+    if (error.code === '23505') return res.json({ success: true, alreadyJoined: true });
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Tells the client whether this user/browser already joined, and - for admins
+// only - includes the waitlist counters. Admin status is decided here from the
+// verified token; the client never claims it.
+app.get('/api/pro/waitlist/status', rateLimitWaitlist, optionalAuth, async (req, res) => {
+  try {
+    const visitorId = typeof req.query.visitorId === 'string' && VISITOR_ID_PATTERN.test(req.query.visitorId)
+      ? req.query.visitorId
+      : null;
+
+    let joined = false;
+    let email = null;
+
+    if (req.user) {
+      const result = await pool.query('SELECT email FROM pro_waitlist WHERE user_id = $1', [req.user.id]);
+      if (result.rows.length > 0) {
+        joined = true;
+        email = result.rows[0].email;
+      }
+    } else if (visitorId) {
+      const result = await pool.query('SELECT 1 FROM pro_waitlist WHERE visitor_id = $1', [visitorId]);
+      joined = result.rows.length > 0;
+    }
+
+    const isAdmin = isAdminUser(req.user);
+    const stats = isAdmin ? await getWaitlistStats() : undefined;
+
+    res.json({ joined, email, isAdmin, stats });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });
