@@ -2079,7 +2079,9 @@ body.dark-mode .app-banner { color: #ffb340; }
   }
   /* wide enough for two 40px buttons and a readable number */
   .stepper-ultra { min-width: 150px; }
-  .layout-grid:not(.ios-mode) .rarity-grid > .glass-card > .stepper-ultra { width: auto !important; min-width: 150px; }
+  /* A fixed width: letting the number box size the stepper makes it swell and squash the rarity name. */
+  .layout-grid:not(.ios-mode) .rarity-grid > .glass-card > .stepper-ultra { width: 150px !important; min-width: 0; }
+  .layout-grid:not(.ios-mode) .rarity-grid > .glass-card > .stepper-ultra .stepper-input { min-width: 0; width: 100%; }
 
   .rarity-btn,
   .segmented-btn,
