@@ -105,3 +105,29 @@
 .card-wishlist-btn:active {
   transform: scale(0.9);
 }
+
+/* Placeholder while the artwork downloads, then a soft fade-in. */
+.pokemon-card img {
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.pokemon-card img.is-loaded {
+  opacity: 1;
+}
+
+.pokemon-card.is-loading {
+  background: linear-gradient(100deg, rgba(128, 128, 140, 0.14) 30%, rgba(128, 128, 140, 0.26) 50%, rgba(128, 128, 140, 0.14) 70%);
+  background-size: 200% 100%;
+  animation: cardShimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes cardShimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pokemon-card.is-loading { animation: none; }
+  .pokemon-card img { transition: none; }
+}

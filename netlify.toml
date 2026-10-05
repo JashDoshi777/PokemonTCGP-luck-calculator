@@ -1,4 +1,4 @@
-[build]
+﻿[build]
   command = "npm run build"
   publish = "dist"
   functions = "netlify/functions"
@@ -15,12 +15,12 @@
 
 # Security headers for every page.
 #  - The Content-Security-Policy only allows what the app really uses: its own
-#    files, the jsDelivr CDN (card data + images), TCGdex (pack logos) and Google Fonts.
+#    files, the jsDelivr CDN (card data + images), TCGdex (pack logos), the wsrv.nl image resizer (card thumbnails) and Google Fonts.
 #  - 'unsafe-inline' is limited to styles (React sets inline style attributes).
 [[headers]]
   for = "/*"
   [headers.values]
-    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://cdn.jsdelivr.net https://assets.tcgdex.net; connect-src 'self' https://cdn.jsdelivr.net https://assets.tcgdex.net; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://cdn.jsdelivr.net https://assets.tcgdex.net https://wsrv.nl; connect-src 'self' https://cdn.jsdelivr.net https://assets.tcgdex.net; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
     X-Content-Type-Options = "nosniff"
     X-Frame-Options = "DENY"
     Referrer-Policy = "strict-origin-when-cross-origin"

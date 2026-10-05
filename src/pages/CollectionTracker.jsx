@@ -51,7 +51,7 @@ const AppleProgressRing = ({ percentage, size = 100, stroke  = 8 }) => {
   );
 };
 
-const CARDS_PER_BATCH = 60;
+const CARDS_PER_BATCH = 24;
 
 const CollectionTracker = () => {
   const { cards, sets, collection, wishlist, toggleWishlist, updateCardCount, batchUpdateCollection, loading } = useAppContext();
@@ -199,7 +199,7 @@ const CollectionTracker = () => {
       if (entries.some(entry => entry.isIntersecting)) {
         setBatch({ key: filterKey, count: visibleCount + CARDS_PER_BATCH });
       }
-    }, { rootMargin: '800px 0px' });
+    }, { rootMargin: '500px 0px' });
     observer.observe(node);
     return () => observer.disconnect();
   }, [hasMore, visibleCount, filterKey]);

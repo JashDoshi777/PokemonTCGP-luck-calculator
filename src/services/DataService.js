@@ -1,12 +1,12 @@
-import { fetchJson } from './http';
+﻿import { fetchJson } from './http';
 
 const BASE_URL = 'https://cdn.jsdelivr.net/npm/pokemon-tcg-pocket-database@latest/dist';
 
-// The CDN resolves "@latest" and caches it, so the cache-buster only changes once
-// an hour: fresh enough to pick up a new set quickly, while letting the browser
+// The CDN resolves "@latest" and caches it, so the cache-buster only changes every
+// six hours: fresh enough to pick up a new set quickly, while letting the browser
 // and CDN cache the multi-megabyte files between visits (a per-request timestamp
 // would force a full re-download on every page load).
-const cacheBucket = () => Math.floor(Date.now() / 3_600_000);
+const cacheBucket = () => Math.floor(Date.now() / 21_600_000);
 
 class DataService {
   constructor() {

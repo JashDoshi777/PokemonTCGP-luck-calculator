@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronRight } from 'lucide-react';
 import { RARITIES, ICONS } from '../data';
 import { runLuckCalculation } from '../math';
 import { useAppContext } from '../context/AppContext';
@@ -116,7 +115,6 @@ function Calculator({ mode, selectedPack, isModal }) {
   const [counts, setCounts] = useState(() => loadCounts(`${storageKey}-counts`));
   const [results, setResults] = useState(null);
   const [notice, setNotice] = useState(null);
-  const [isLogCollapsed, setIsLogCollapsed] = useState(false);
 
   useEffect(() => {
     session.set(`${storageKey}-packs`, String(packsOpened));
@@ -148,16 +146,10 @@ function Calculator({ mode, selectedPack, isModal }) {
       saveLuckStat({ score: result.score, overallPct: result.overallPct, packs: packsOpened + deluxePacksOpened });
     }
 
-    // On wide (laptop+) screens, collapse the input panel into a rail so the
-    // results are fully visible without scrolling. Narrower screens already
-    // stack the panels full-width, so scroll down to the results instead.
-    if (!isModal && window.innerWidth >= 900) {
-      setIsLogCollapsed(true);
-    } else {
-      setTimeout(() => {
-        resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
-    }
+    // Bring the evaluation into view.
+    setTimeout(() => {
+      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   };
 
   // Once results are showing, keep them in step with the inputs (and drop them if the inputs no longer support a result).
@@ -166,7 +158,6 @@ function Calculator({ mode, selectedPack, isModal }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [packsOpened, deluxePacksOpened, counts, mode, selectedPack]);
 
-  const showCollapsedRail = !isModal && isLogCollapsed;
   const displayRows = results ? buildDisplayRows(results) : [];
   const blended = mode === 'overall' && deluxePacksOpened > 0;
   const verdict = results ? verdictFor(results.score) : null;
@@ -180,15 +171,9 @@ function Calculator({ mode, selectedPack, isModal }) {
   });
 
   return (
-    <div className={`layout-grid animate-enter ${isModal ? 'ios-mode' : ''} ${showCollapsedRail ? 'log-collapsed' : ''}`}>
+    <div className={`layout-grid animate-enter ${isModal ? 'ios-mode' : ''}`}>
       <div className={isModal ? 'ios-section' : 'glass-panel'}>
-        {showCollapsedRail ? (
-          <button className="trainers-log-rail" onClick={() => setIsLogCollapsed(false)} title="Expand Trainer's Log" aria-label="Expand Trainer's Log">
-            <span className="trainers-log-rail-label">Trainer's Log</span>
-            <ChevronRight size={18} />
-          </button>
-        ) : (
-          <>
+        <>
             <h2 className={isModal ? 'ios-section-header' : 'text-gradient'} style={!isModal ? { fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: '40px' } : {}}>Trainer's Log</h2>
 
             <div className="calc-form" style={{ display: 'flex', flexDirection: 'column', gap: isModal ? '16px' : '32px' }}>
@@ -229,8 +214,7 @@ function Calculator({ mode, selectedPack, isModal }) {
               </button>
               <div className="calc-notice" role="status" aria-live="polite">{notice}</div>
             </div>
-          </>
-        )}
+        </>
       </div>
 
       <div ref={resultsRef} className={isModal ? 'ios-section' : 'glass-panel sticky-panel'}>
