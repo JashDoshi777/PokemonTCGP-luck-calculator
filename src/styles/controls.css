@@ -1,4 +1,4 @@
-﻿/* Segmented control (Builder / My Decks, range pickers, tabs). Shared by several pages, so it lives in the main bundle. */
+/* Segmented control (Builder / My Decks, range pickers, tabs). Shared by several pages, so it lives in the main bundle. */
 .apple-segmented-control {
   display: flex;
   background: var(--nav-pill-hover-bg);

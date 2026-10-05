@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { X, Shuffle } from 'lucide-react';
 import PokemonAvatar from './PokemonAvatar';
 import { useDialog } from '../hooks/useDialog';

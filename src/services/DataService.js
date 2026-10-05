@@ -1,4 +1,4 @@
-﻿import { fetchJson } from './http';
+import { fetchJson } from './http';
 
 const BASE_URL = 'https://cdn.jsdelivr.net/npm/pokemon-tcg-pocket-database@latest/dist';
 

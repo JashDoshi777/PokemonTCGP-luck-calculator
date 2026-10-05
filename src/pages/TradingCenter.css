@@ -1,4 +1,4 @@
-﻿/* Inline status banners (replace blocking alert() popups) */
+/* Inline status banners (replace blocking alert() popups) */
 .trade-notice {
   display: flex;
   align-items: center;

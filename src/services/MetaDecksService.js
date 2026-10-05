@@ -1,4 +1,4 @@
-﻿import { fetchJson } from './http';
+import { fetchJson } from './http';
 import { getCoreCards } from './cardsCore';
 
 // Live meta tier-list, sourced from PocketDecks' community-run data pipeline
