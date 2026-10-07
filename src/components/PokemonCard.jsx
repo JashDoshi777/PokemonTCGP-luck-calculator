@@ -17,7 +17,10 @@ const PokemonCard = ({ card, count, isWishlisted, onToggleWishlist }) => {
   const setCode = card.set || 'A1';
   // card.image (from the main card DB) is a bare filename, not a usable URL - only
   // card.artUrl (an explicit full URL some callers supply) should override the default.
-  const imgUrl = card.artUrl || `https://cdn.jsdelivr.net/gh/flibustier/pokemon-tcg-exchange@main/public/images/cards-by-set/${setCode}/${cardNumberStr}.webp`;
+  // The previous host (flibustier repo) outgrew jsDelivr's 50 MB limit and now 404s, so art
+  // comes from the PocketDecks mirror: lowercase set folder, 3-digit number, promos as pa/pb.
+  const setFolder = setCode.toLowerCase().replace(/^promo-/, 'p');
+  const imgUrl = card.artUrl || `https://cdn.jsdelivr.net/gh/PocketDecks/pokemon-tcg-pocket-cards@main/images/webp/cards/${setFolder}/${cardNumberStr.padStart(3, '0')}.webp`;
   const sources = useMemo(() => cardImageSources(imgUrl), [imgUrl]);
 
   useEffect(() => {
